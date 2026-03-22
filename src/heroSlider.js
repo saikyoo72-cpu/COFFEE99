@@ -1,0 +1,43 @@
+/**
+ * Coffee99 Hero Slider Logic
+ * This script handles the automatic 3-second transitions for the hero section.
+ */
+
+const slides = [
+  { 
+    title: "Cozy Retreat", 
+    text: "Your favorite neighborhood spot for bold flavors and edgy vibes.", 
+    img: "https://i.ibb.co/4wthMNQg/unnamed.jpg" 
+  },
+  { 
+    title: "Handcrafted Care", 
+    text: "Every detail matters when it comes to your perfect coffee experience.", 
+    img: "https://i.ibb.co/x9dBcWN/unnamed.jpg" 
+  },
+  { 
+    title: "Perfect Aroma", 
+    text: "Indulge in the rich scent and flavor of our expertly roasted beans.", 
+    img: "https://i.ibb.co/RG5tPmY7/unnamed.jpg" 
+  },
+];
+
+let currentSlide = 0;
+
+export function initHeroSlider(onSlideChange) {
+  // Preload images
+  slides.forEach(slide => {
+    const img = new Image();
+    img.src = slide.img;
+  });
+
+  const interval = setInterval(() => {
+    currentSlide = (currentSlide + 1) % slides.length;
+    if (onSlideChange) {
+      onSlideChange(currentSlide, slides[currentSlide]);
+    }
+  }, 10000); // Changed to 10 seconds as per request
+
+  return () => clearInterval(interval);
+}
+
+export { slides };

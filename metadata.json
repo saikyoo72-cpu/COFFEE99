@@ -1,0 +1,7 @@
+{
+  "name": "Coffee99 - Your Neighborhood Cafe",
+  "description": "A professional, modern, and responsive multi-branch cafe website for Coffee99, powered by Supabase.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
