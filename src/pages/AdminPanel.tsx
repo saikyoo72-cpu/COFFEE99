@@ -691,7 +691,17 @@ export default function AdminPanel() {
               placeholder="Leave blank to keep current"
               className="w-full px-6 py-4 bg-black/40 border border-white/10 rounded-2xl text-white outline-none focus:border-primary-brown transition-all" 
             />
-            <p className="mt-2 text-xs text-gray-500 italic">This key will be required for the next login.</p>
+            <p className="mt-2 text-xs text-gray-500 italic">This key will be required for the next login on this branch.</p>
+            
+            <div className="mt-6 p-4 bg-primary-brown/5 border border-primary-brown/20 rounded-xl">
+              <div className="flex items-center gap-2 text-primary-brown mb-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Note for Multi-Device</span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                If you are using multiple devices, ensure you have configured a <strong>Master Password</strong> in the system settings. This acts as a global key that works across all branches and devices.
+              </p>
+            </div>
           </div>
         </div>
 

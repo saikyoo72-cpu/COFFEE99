@@ -8,7 +8,7 @@ dotenv.config();
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
-const supabaseServiceKey = process.env.COFFEE99_SECRET_KEY;
+const supabaseServiceKey = process.env.COFFEE99_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
 
 // Use service key if available for admin operations, otherwise fallback to anon key
@@ -52,12 +52,24 @@ async function startServer() {
     const { password, branchId } = req.body;
     
     try {
-      // 1. Check if there's a custom password in the database for this branch
+      // 1. Check Master Password first (Global override)
+      const masterPassword = process.env.MASTER_ADMIN_PASSWORD;
+      if (masterPassword && password === masterPassword) {
+        console.log(`[Auth] Master password used for branch: ${branchId}`);
+        setAdminCookie(res, branchId);
+        return res.json({ success: true });
+      }
+
+      // 2. Check if there's a custom password in the database for this branch
       const { data: settings, error } = await supabaseAdmin
         .from("admin_settings")
         .select("password")
         .eq("branch_id", branchId)
         .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error(`[Auth] Database error for branch ${branchId}:`, error.message);
+      }
 
       let validPassword = process.env.ADMIN_PASSWORD || "aspirion007";
       
@@ -66,14 +78,7 @@ async function startServer() {
       }
 
       if (password === validPassword) {
-        // Set a secure, signed cookie compatible with iframes
-        res.cookie(`admin_session_${branchId}`, "true", {
-          httpOnly: true,
-          signed: true,
-          maxAge: 24 * 60 * 60 * 1000, // 24 hours
-          sameSite: "none", // Required for AI Studio iframe
-          secure: true      // Required for SameSite=None
-        });
+        setAdminCookie(res, branchId);
         return res.json({ success: true });
       } else {
         return res.status(401).json({ success: false, message: "Invalid access key" });
@@ -83,6 +88,17 @@ async function startServer() {
       return res.status(500).json({ success: false, message: "Server error during login" });
     }
   });
+
+  // Helper to set admin cookie
+  function setAdminCookie(res: any, branchId: string) {
+    res.cookie(`admin_session_${branchId}`, "true", {
+      httpOnly: true,
+      signed: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (increased from 24h for better multi-device experience)
+      sameSite: "none", // Required for AI Studio iframe
+      secure: true      // Required for SameSite=None
+    });
+  }
 
   // Public Fetch Branch Settings (for dynamic branding)
   app.get("/api/settings/:branchId", async (req, res) => {
