@@ -54,19 +54,12 @@ export default function AdminPanel() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const response = await fetch(`/api/admin/verify/${branchId}`, {
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          navigate(`/admin/${branchId}/login`);
-          return;
-        }
-        fetchData();
-      } catch (err) {
-        console.error('Auth check error:', err);
+      const isAuth = sessionStorage.getItem(`admin_auth_${branchId}`);
+      if (isAuth !== 'true') {
         navigate(`/admin/${branchId}/login`);
+        return;
       }
+      fetchData();
     };
 
     checkAuth();
@@ -127,25 +120,25 @@ export default function AdminPanel() {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`/api/admin/orders/${branchId}`, {
-        credentials: 'include'
-      });
+      // Fetch orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('branch_id', branchId)
+        .order('created_at', { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setOrders(ordersData || []);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-      
-      const data = await response.json();
-      setOrders(data || []);
-      
-      // Also fetch store name for branding
-      const settingsRes = await fetch(`/api/admin/settings/${branchId}`, {
-        credentials: 'include'
-      });
-      if (settingsRes.ok) {
-        const settingsData = await settingsRes.json();
-        if (settingsData.store_name) setStoreName(settingsData.store_name);
-      }
+      // Fetch store settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('admin_settings')
+        .select('store_name, store_email, store_address')
+        .eq('branch_id', branchId)
+        .single();
+
+      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
+      if (settingsData?.store_name) setStoreName(settingsData.store_name);
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
@@ -155,19 +148,15 @@ export default function AdminPanel() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/admin/orders/${branchId}/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus })
-      });
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId)
+        .select()
+        .single();
       
-      if (!response.ok) throw new Error('Failed to update status');
-      
-      const updatedOrder = await response.json();
-      setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+      if (error) throw error;
+      setOrders(prev => prev.map(o => o.id === orderId ? data : o));
     } catch (err) {
       console.error('Update status error:', err);
       alert('Failed to update status. Please try again.');
@@ -181,12 +170,12 @@ export default function AdminPanel() {
       isDanger: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/admin/orders/${branchId}/${orderId}`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
+          const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', orderId);
           
-          if (!response.ok) throw new Error('Failed to delete order');
+          if (error) throw error;
           
           setOrders(prev => prev.filter(o => o.id !== orderId));
           setIsConfirmModalOpen(false);
@@ -205,12 +194,12 @@ export default function AdminPanel() {
       isDanger: true,
       onConfirm: async () => {
         try {
-          const response = await fetch(`/api/admin/orders/${branchId}`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
+          const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('branch_id', branchId);
           
-          if (!response.ok) throw new Error('Failed to clear orders');
+          if (error) throw error;
           
           setOrders([]);
           setIsConfirmModalOpen(false);
@@ -223,17 +212,8 @@ export default function AdminPanel() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch(`/api/admin/logout/${branchId}`, { 
-        method: 'POST',
-        credentials: 'include'
-      });
-      sessionStorage.removeItem(`admin_auth_${branchId}`);
-      navigate(`/admin/${branchId}/login`);
-    } catch (err) {
-      console.error('Logout error:', err);
-      navigate(`/admin/${branchId}/login`);
-    }
+    sessionStorage.removeItem(`admin_auth_${branchId}`);
+    navigate(`/admin/${branchId}/login`);
   };
 
   const totalRevenue = orders
@@ -577,11 +557,15 @@ export default function AdminPanel() {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`/api/admin/settings/${branchId}`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const { data, error } = await supabase
+        .from('admin_settings')
+        .select('store_name, store_email, store_address')
+        .eq('branch_id', branchId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      if (data) {
         setSettingsStoreName(data.store_name || branch?.name || '');
         setSettingsStoreEmail(data.store_email || 'admin@coffee99.in');
         setSettingsStoreAddress(data.store_address || branch?.address || '');
@@ -597,26 +581,27 @@ export default function AdminPanel() {
     setSettingsStatus(null);
 
     try {
-      const response = await fetch(`/api/admin/update-settings/${branchId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          newPassword: newPassword || undefined, 
-          storeName: settingsStoreName, 
-          storeEmail: settingsStoreEmail, 
-          storeAddress: settingsStoreAddress 
-        }),
-        credentials: 'include'
-      });
+      const updates: any = {
+        branch_id: branchId,
+        updated_at: new Date().toISOString(),
+        store_name: settingsStoreName,
+        store_email: settingsStoreEmail,
+        store_address: settingsStoreAddress
+      };
 
-      const data = await response.json();
-      if (response.ok) {
-        setSettingsStatus({ type: 'success', message: 'Settings updated successfully!' });
-        setNewPassword('');
-        setStoreName(settingsStoreName); // Update branding state immediately
-      } else {
-        throw new Error(data.message || 'Failed to update settings');
+      if (newPassword && newPassword.length >= 4) {
+        updates.password = newPassword;
       }
+
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert(updates, { onConflict: 'branch_id' });
+
+      if (error) throw error;
+
+      setSettingsStatus({ type: 'success', message: 'Settings updated successfully!' });
+      setNewPassword('');
+      setStoreName(settingsStoreName);
     } catch (err: any) {
       setSettingsStatus({ type: 'error', message: err.message });
     } finally {

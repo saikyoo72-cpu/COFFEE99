@@ -7,9 +7,9 @@ import { createClient } from "@supabase/supabase-js";
 dotenv.config();
 
 // Initialize Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://mvzylepgbvfbgupanelf.supabase.co";
 const supabaseServiceKey = process.env.COFFEE99_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_zZLHCEtjVoL-tF-LevFu4Q_rPKjT6Qs";
 
 // Use service key if available for admin operations, otherwise fallback to anon key
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
@@ -50,6 +50,10 @@ async function startServer() {
   // Admin Login Endpoint
   app.post("/api/admin/login", async (req, res) => {
     const { password, branchId } = req.body;
+    
+    if (!branchId) {
+      return res.status(400).json({ success: false, message: "Branch ID is required" });
+    }
     
     try {
       // 1. Check Master Password first (Global override)

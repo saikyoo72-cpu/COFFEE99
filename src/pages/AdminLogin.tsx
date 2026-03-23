@@ -17,6 +17,11 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
     
+    if (!branchId) {
+      setError('Invalid branch selected.');
+      return;
+    }
+    
     try {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
