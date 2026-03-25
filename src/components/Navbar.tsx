@@ -9,8 +9,7 @@ import AuthModal from './AuthModal';
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'Menu', path: '/branch/shivmandir/menu' },
-  { name: 'Locations', path: '/#locations' },
-  { name: 'About', path: '/#about' },
+  { name: 'About Us', path: '/#about' },
 ];
 
 export default function Navbar() {
@@ -59,14 +58,14 @@ export default function Navbar() {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-8">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.name}
-                  href={link.path}
+                  to={link.path}
                   className="relative text-dark-roast font-medium text-sm uppercase tracking-widest group"
                 >
                   {link.name}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-caramel transition-all duration-300 group-hover:w-full"></span>
-                </a>
+                </Link>
               ))}
               
               {user ? (
@@ -128,14 +127,14 @@ export default function Navbar() {
             >
               <div className="px-4 pt-2 pb-6 space-y-1">
                 {navLinks.map((link) => (
-                  <a
+                  <Link
                     key={link.name}
-                    href={link.path}
+                    to={link.path}
                     onClick={() => setIsOpen(false)}
                     className="block px-3 py-4 text-base font-medium text-dark-roast hover:bg-latte-beige/10 rounded-xl transition-colors"
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 ))}
                 
                 <div className="pt-4 pb-2 border-t border-latte-beige/20">

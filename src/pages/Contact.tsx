@@ -13,7 +13,7 @@ export default function Contact() {
     {
       icon: <Phone className="h-6 w-6" />,
       title: "Call Us",
-      details: "+1 (555) 123-4567",
+      details: "08927707769",
       subtext: "Mon-Fri from 8am to 6pm"
     },
     {

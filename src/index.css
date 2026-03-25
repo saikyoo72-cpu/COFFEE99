@@ -56,6 +56,7 @@ body {
 
 section {
   scroll-snap-align: start;
+  scroll-margin-top: 80px;
 }
 
 @utility no-scrollbar {

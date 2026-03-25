@@ -58,6 +58,11 @@ export default function Checkout() {
             <div>
               <h3 className="text-2xl font-serif font-bold text-white mb-2">Pay 50%</h3>
               <p className="text-gray-400 text-sm font-light">Book your table now and pay the rest later at the restaurant.</p>
+              <div className="mt-4 p-3 bg-primary-brown/5 rounded-xl border border-primary-brown/20">
+                <p className="text-xs text-primary-brown font-medium leading-relaxed italic">
+                  Note: Online orders are available only via Zomato & other apps. This option is for table booking in café.
+                </p>
+              </div>
             </div>
             <div className="w-full py-4 bg-primary-brown text-white rounded-2xl font-bold text-sm uppercase tracking-[0.2em] group-hover:bg-white group-hover:text-black transition-all">
               Book a Table
@@ -80,6 +85,11 @@ export default function Checkout() {
             <div>
               <h3 className="text-2xl font-serif font-bold text-white mb-2">Pay 100%</h3>
               <p className="text-gray-400 text-sm font-light">Pay the full amount now for a completely seamless dining experience.</p>
+              <div className="mt-4 p-3 bg-primary-brown/5 rounded-xl border border-primary-brown/20">
+                <p className="text-xs text-primary-brown font-medium leading-relaxed italic">
+                  Note: Online orders are available only via Zomato & other apps. This option is for table booking in café.
+                </p>
+              </div>
             </div>
             <div className="w-full py-4 bg-primary-brown text-white rounded-2xl font-bold text-sm uppercase tracking-[0.2em] group-hover:bg-white group-hover:text-black transition-all">
               Book a Table

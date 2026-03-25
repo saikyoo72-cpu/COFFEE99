@@ -241,14 +241,13 @@ async function setupApp() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+
+  // Start the server after setup is complete
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 }
 
 setupApp();
 
 export default app;
-
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}

@@ -24,12 +24,6 @@ const slides = [
 let currentSlide = 0;
 
 export function initHeroSlider(onSlideChange) {
-  // Preload images
-  slides.forEach(slide => {
-    const img = new Image();
-    img.src = slide.img;
-  });
-
   const interval = setInterval(() => {
     currentSlide = (currentSlide + 1) % slides.length;
     if (onSlideChange) {

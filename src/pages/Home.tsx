@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, 
   Coffee, 
-  Wifi, 
+  Utensils, 
   Users, 
   Zap, 
   Star, 
@@ -16,14 +16,16 @@ import { branches, testimonials } from '../data';
 import { slides } from '../heroSlider';
 import { useCart } from '../context/CartContext';
 
+import { useReviews } from '../context/ReviewContext';
+
 export default function Home() {
   const { addToCart } = useCart();
+  const { reviews, addReview } = useReviews();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setDirection(1);
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 10000);
     return () => clearInterval(timer);
@@ -66,32 +68,26 @@ export default function Home() {
   };
 
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newReview, setNewReview] = useState({ name: '', text: '', rating: 5 });
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+      setCurrentTestimonial((prev) => (prev + 1) % reviews.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [reviews.length]);
 
-  const featuredProducts = [
-    { name: "Espresso", price: "₹2", desc: "Pure and intense coffee experience.", img: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?auto=format&fit=crop&q=80&w=400" },
-    { name: "Cappuccino", price: "₹2", desc: "Perfect balance of espresso and foam.", img: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&q=80&w=400" },
-    { name: "Cafe Latte", price: "₹2", desc: "Smooth espresso with steamed milk.", img: "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?auto=format&fit=crop&q=80&w=400" },
-    { name: "Mocha", price: "₹2", desc: "Rich chocolate meets bold espresso.", img: "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&q=80&w=400" },
-    { name: "Cold Coffee", price: "₹2", desc: "Refreshing cold brew over ice.", img: "https://images.unsplash.com/photo-1517701550737-265d0727c996?auto=format&fit=crop&q=80&w=400" },
-  ];
-
-  const galleryImages = [
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1501339817302-ee4f89ac3a81?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1525610553991-2bede1a236e2?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=600",
-    "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&q=80&w=600",
-  ];
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newReview.name && newReview.text) {
+      addReview(newReview);
+      setNewReview({ name: '', text: '', rating: 5 });
+      setShowReviewForm(false);
+      // Switch to the new review
+      setCurrentTestimonial(reviews.length);
+    }
+  };
 
   return (
     <div className="overflow-x-hidden">
@@ -199,6 +195,203 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 6. CUSTOMER REVIEWS */}
+      <section id="reviews" className="py-24 bg-primary-brown overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <span className="text-white/60 font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Testimonials</span>
+            <h2 className="text-4xl md:text-5xl font-serif text-white">What Our <span className="italic text-black">Customers Say</span></h2>
+          </motion.div>
+
+          <div className="relative max-w-4xl mx-auto">
+            <div className="overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentTestimonial}
+                  initial={{ opacity: 0, x: 100, filter: "blur(10px)" }}
+                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, x: -100, filter: "blur(10px)" }}
+                  transition={{ duration: 0.6, ease: "circOut" }}
+                  className="text-center"
+                >
+                  <div className="flex justify-center gap-1 mb-6">
+                    {[...Array(reviews[currentTestimonial].rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-white text-white" />
+                    ))}
+                  </div>
+                  <p className="text-2xl md:text-4xl font-serif italic text-white mb-8 leading-relaxed">
+                    "{reviews[currentTestimonial].text}"
+                  </p>
+                  <h4 className="text-lg font-bold text-black uppercase tracking-widest">
+                    {reviews[currentTestimonial].name}
+                  </h4>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="flex justify-center gap-4 mt-12">
+              <button 
+                onClick={() => setCurrentTestimonial((prev) => (prev - 1 + reviews.length) % reviews.length)}
+                className="p-3 rounded-full border-2 border-white text-white hover:bg-white hover:text-primary-brown transition-all"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button 
+                onClick={() => setCurrentTestimonial((prev) => (prev + 1) % reviews.length)}
+                className="p-3 rounded-full border-2 border-white text-white hover:bg-white hover:text-primary-brown transition-all"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Review Submission Option */}
+            <div className="mt-16 text-center">
+              {!showReviewForm ? (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowReviewForm(true)}
+                  className="px-8 py-3 bg-black text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-xl"
+                >
+                  Leave a Review
+                </motion.button>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20 max-w-lg mx-auto"
+                >
+                  <h3 className="text-xl font-serif text-white mb-6">Share Your Experience</h3>
+                  <form onSubmit={handleSubmitReview} className="space-y-4">
+                    <div className="flex justify-center gap-2 mb-4">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                          className="focus:outline-none"
+                        >
+                          <Star 
+                            className={`h-6 w-6 transition-colors ${
+                              star <= newReview.rating ? 'fill-white text-white' : 'text-white/30'
+                            }`} 
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Your Name"
+                      required
+                      value={newReview.name}
+                      onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
+                      className="w-full px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                    />
+                    <textarea
+                      placeholder="Your Review"
+                      required
+                      rows={3}
+                      value={newReview.text}
+                      onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
+                      className="w-full px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all resize-none"
+                    ></textarea>
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewForm(false)}
+                        className="flex-1 py-3 border border-white/20 text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 py-3 bg-white text-primary-brown rounded-full font-bold text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. LOCATIONS SECTION (Integrated into Home) */}
+      <section id="locations" className="py-24 bg-cream-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "backOut" }}
+            className="text-center mb-16"
+          >
+            <span className="text-caramel font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Visit Us</span>
+            <h2 className="text-4xl md:text-5xl font-serif text-dark-roast">Our <span className="italic">5 Branches</span></h2>
+          </motion.div>
+
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2
+                }
+              }
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+          >
+            {branches.map((branch) => (
+              <motion.div
+                key={branch.id}
+                variants={{
+                  hidden: { opacity: 0, y: 50, scale: 0.9 },
+                  visible: { opacity: 1, y: 0, scale: 1 }
+                }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="group bg-cream-bg rounded-[40px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:shadow-2xl transition-all duration-500"
+              >
+                <Link to={`/branch/${branch.id}`} className="block h-64 overflow-hidden relative">
+                  <img 
+                    src={branch.image} 
+                    alt={branch.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                </Link>
+                <div className="p-10">
+                  <h3 className="text-2xl font-serif font-bold text-dark-roast mb-4">{branch.name}</h3>
+                  <p className="text-slate-400 text-sm font-light mb-8 line-clamp-2">
+                    {branch.description}
+                  </p>
+                  <div className="flex flex-col gap-4">
+                    <Link 
+                      to={`/branch/${branch.id}`}
+                      className="inline-flex items-center text-primary-brown font-bold text-sm uppercase tracking-widest group/link"
+                    >
+                      Explore Branch <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* 4. ABOUT / STORY SECTION */}
       <section id="about" className="py-24 bg-latte-beige overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -231,6 +424,7 @@ export default function Home() {
                   alt="Raja - Founder of Coffee99" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
               </div>
               {/* Subtle accent circle */}
@@ -274,131 +468,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. CUSTOMER REVIEWS */}
-      <section id="reviews" className="py-24 bg-primary-brown overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <span className="text-white/60 font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Testimonials</span>
-            <h2 className="text-4xl md:text-5xl font-serif text-white">What Our <span className="italic text-black">Customers Say</span></h2>
-          </motion.div>
-
-          <div className="relative max-w-4xl mx-auto">
-            <div className="overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentTestimonial}
-                  initial={{ opacity: 0, x: 100, filter: "blur(10px)" }}
-                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, x: -100, filter: "blur(10px)" }}
-                  transition={{ duration: 0.6, ease: "circOut" }}
-                  className="text-center"
-                >
-                  <div className="flex justify-center gap-1 mb-6">
-                    {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-white text-white" />
-                    ))}
-                  </div>
-                  <p className="text-2xl md:text-4xl font-serif italic text-white mb-8 leading-relaxed">
-                    "{testimonials[currentTestimonial].text}"
-                  </p>
-                  <h4 className="text-lg font-bold text-black uppercase tracking-widest">
-                    {testimonials[currentTestimonial].name}
-                  </h4>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <div className="flex justify-center gap-4 mt-12">
-              <button 
-                onClick={() => setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
-                className="p-3 rounded-full border-2 border-white text-white hover:bg-white hover:text-primary-brown transition-all"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <button 
-                onClick={() => setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)}
-                className="p-3 rounded-full border-2 border-white text-white hover:bg-white hover:text-primary-brown transition-all"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. LOCATIONS SECTION (Integrated into Home) */}
-      <section id="locations" className="py-24 bg-cream-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "backOut" }}
-            className="text-center mb-16"
-          >
-            <span className="text-caramel font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Visit Us</span>
-            <h2 className="text-4xl md:text-5xl font-serif text-dark-roast">Our <span className="italic">Locations</span></h2>
-          </motion.div>
-
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.2
-                }
-              }
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
-          >
-            {branches.map((branch) => (
-              <motion.div
-                key={branch.id}
-                variants={{
-                  hidden: { opacity: 0, y: 50, scale: 0.9 },
-                  visible: { opacity: 1, y: 0, scale: 1 }
-                }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="group bg-cream-bg rounded-[40px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:shadow-2xl transition-all duration-500"
-              >
-                <Link to={`/branch/${branch.id}`} className="block h-64 overflow-hidden relative">
-                  <img 
-                    src={branch.image} 
-                    alt={branch.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    referrerPolicy="no-referrer"
-                  />
-                </Link>
-                <div className="p-10">
-                  <h3 className="text-2xl font-serif font-bold text-dark-roast mb-4">{branch.name}</h3>
-                  <p className="text-slate-400 text-sm font-light mb-8 line-clamp-2">
-                    {branch.description}
-                  </p>
-                  <div className="flex flex-col gap-4">
-                    <Link 
-                      to={`/branch/${branch.id}`}
-                      className="inline-flex items-center text-primary-brown font-bold text-sm uppercase tracking-widest group/link"
-                    >
-                      Explore Branch <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* 5. WHY CHOOSE US (Moved to last) */}
       <section className="py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -429,7 +498,7 @@ export default function Home() {
           >
             {[
               { icon: Coffee, title: "Fresh Beans Daily", desc: "Roasted in small batches for peak flavor." },
-              { icon: Wifi, title: "Free WiFi", desc: "High-speed internet for all your needs." },
+              { icon: Utensils, title: "Delhi Imported Chicken", desc: "Specially sourced for authentic taste." },
               { icon: Users, title: "Comfort Seating", desc: "Ergonomic spaces for work or relax." },
               { icon: Zap, title: "Fast Service", desc: "Your coffee, ready when you are." },
             ].map((feature, idx) => (

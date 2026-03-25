@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Logo } from './Logo';
 import { Coffee, Instagram, Facebook, MapPin, Phone, Mail } from 'lucide-react';
 
+import { Link } from 'react-router-dom';
+
 export default function Footer() {
   const [settings, setSettings] = useState<any>(null);
 
@@ -48,8 +50,7 @@ export default function Footer() {
           <div className="space-y-6">
             <h4 className="text-xl font-serif font-bold text-primary-brown">Quick Links</h4>
             <ul className="space-y-4">
-              <li><a href="/menu" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Menu</a></li>
-              <li><a href="/#locations" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Locations</a></li>
+              <li><Link to="/#locations" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Locations</Link></li>
             </ul>
           </div>
 
@@ -65,7 +66,7 @@ export default function Footer() {
               )}
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>+91 98765 43210</span>
+                <span>08927707769</span>
               </li>
             </ul>
           </div>

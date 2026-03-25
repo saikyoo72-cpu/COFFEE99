@@ -25,8 +25,8 @@ export default function PaymentForm({ paymentMethod, title }: PaymentFormProps) 
   const advanceAmount = totalPrice * 0.5;
   const payableAmount = paymentMethod === 'advance' ? advanceAmount : totalPrice;
   
-  const upiLink = `upi://pay?pa=9382881536@ybl&pn=Cafe&am=${(payableAmount || 0).toFixed(2)}&cu=INR`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+  const upiLink = `upi://pay?pa=q941102797@ybi&pn=Inns Cafe Lounge&cu=INR`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=224x224&data=${encodeURIComponent(upiLink)}`;
 
   const [error, setError] = useState<string | null>(null);
 
@@ -100,13 +100,13 @@ export default function PaymentForm({ paymentMethod, title }: PaymentFormProps) 
               <div className="inline-block p-6 bg-white rounded-[40px] shadow-2xl border border-white/5 mb-6">
                 <img 
                   src={qrCodeUrl} 
-                  alt="Coffee99 UPI QR Code" 
+                  alt="COFFEE99 UPI QR Code" 
                   className="w-56 h-56 mx-auto"
                   referrerPolicy="no-referrer"
                 />
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-[10px] font-bold text-primary-brown uppercase tracking-[0.2em]">Coffee99 UPI</p>
-                  <p className="text-xs text-gray-400 font-medium">9382881536@ybl</p>
+                  <p className="text-[10px] font-bold text-primary-brown uppercase tracking-[0.2em]">COFFEE99 UPI</p>
+                  <p className="text-xs text-gray-400 font-medium">q941102797@ybi</p>
                 </div>
               </div>
 
