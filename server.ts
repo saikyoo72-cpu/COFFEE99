@@ -3,7 +3,6 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
-import cors from "cors";
 
 dotenv.config();
 
@@ -23,12 +22,6 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAn
 async function startServer() {
   const app = express();
   const PORT = 3000;
-  app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
   app.use(express.json());
   app.use(cookieParser("coffee99-secret-key"));
 
@@ -96,9 +89,7 @@ async function startServer() {
     res.cookie(`admin_session_${branchId}`, "true", {
       httpOnly: true,
       signed: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (increased from 24h for better multi-device experience)
-      sameSite: "none", // Required for AI Studio iframe
-      secure: true      // Required for SameSite=None
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
   }
 
