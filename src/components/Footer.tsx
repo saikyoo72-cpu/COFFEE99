@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Logo } from './Logo';
-import { Coffee, Instagram, Facebook, MapPin, Phone, Mail } from 'lucide-react';
+import { Coffee, Instagram, Facebook, MapPin } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
 
@@ -54,19 +54,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div className="space-y-6">
-            <h4 className="text-xl font-serif font-bold text-primary-brown">Contact</h4>
             <ul className="space-y-4 text-gray-400 font-light">
-              {settings?.store_email && (
-                <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  <span>{settings.store_email}</span>
-                </li>
-              )}
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>08927707769</span>
+              <li className="flex items-center gap-2 pt-2">
+                <span className="font-black text-white text-lg uppercase tracking-wider">Designed by The Aspirion</span>
               </li>
             </ul>
           </div>
