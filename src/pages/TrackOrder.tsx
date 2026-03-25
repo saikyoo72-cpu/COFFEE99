@@ -183,7 +183,7 @@ export default function TrackOrder() {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-[10px] font-bold text-primary-brown uppercase tracking-widest mb-1">Total Amount</p>
-                      <p className="text-2xl font-serif font-bold text-dark-roast">₹{(order.total_price || 0).toFixed(2)}</p>
+                      <p className="text-2xl font-serif font-bold text-dark-roast">₹{Number(order.total_price || 0).toFixed(2)}</p>
                     </div>
                     <div className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white ${statusConfig[order.status].color} shadow-sm`}>
                       {statusConfig[order.status].label}
@@ -243,7 +243,7 @@ export default function TrackOrder() {
                               <p className="text-sm font-bold text-dark-roast">{item.name}</p>
                               <p className="text-[10px] text-gray-500 uppercase tracking-widest">x{item.quantity} • {item.branchName}</p>
                             </div>
-                            <p className="text-sm font-bold text-dark-roast">₹{((item.price || 0) * item.quantity).toFixed(2)}</p>
+                            <p className="text-sm font-bold text-dark-roast">₹{(Number(item.price || 0) * item.quantity).toFixed(2)}</p>
                           </div>
                         ))}
                       </div>

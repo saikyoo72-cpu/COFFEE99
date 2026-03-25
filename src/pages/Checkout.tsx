@@ -37,7 +37,7 @@ export default function Checkout() {
             className="inline-block bg-primary-brown/10 px-8 py-4 rounded-3xl border border-primary-brown/20"
           >
             <p className="text-gray-400 text-sm font-light mb-1">Total Cart Amount</p>
-            <p className="text-3xl font-serif font-bold text-white">₹{(totalPrice || 0).toFixed(2)}</p>
+            <p className="text-3xl font-serif font-bold text-white">₹{Number(totalPrice || 0).toFixed(2)}</p>
           </motion.div>
         </div>
 

@@ -80,12 +80,12 @@ export default function OrderPlaced() {
                     <span className="text-gray-300 font-light">
                       {item.name} <span className="text-primary-brown font-bold ml-1">x{item.quantity}</span>
                     </span>
-                    <span className="text-white font-bold">₹{((item.price || 0) * item.quantity).toFixed(2)}</span>
+                    <span className="text-white font-bold">₹{(Number(item.price || 0) * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between pt-4 border-t border-white/10">
                   <span className="text-white font-serif font-bold">Total Amount</span>
-                  <span className="text-2xl font-serif font-bold text-primary-brown">₹{(totalPrice || 0).toFixed(2)}</span>
+                  <span className="text-2xl font-serif font-bold text-primary-brown">₹{Number(totalPrice || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>

@@ -32,7 +32,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
       const savedCart = localStorage.getItem('coffee99_cart');
-      return savedCart ? JSON.parse(savedCart) : [];
+      if (!savedCart) return [];
+      const parsed = JSON.parse(savedCart);
+      // Ensure all prices are numbers
+      return Array.isArray(parsed) ? parsed.map(item => ({
+        ...item,
+        price: parsePrice(item.price)
+      })) : [];
     } catch (e) {
       console.error('Error parsing saved cart:', e);
       return [];
@@ -51,7 +57,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prevCart, { ...item, quantity: 1 }];
+      return [...prevCart, { ...item, price: parsePrice(item.price), quantity: 1 }];
     });
   };
 
@@ -136,7 +142,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return match ? parseFloat(match[0]) : 0;
   };
 
-  const totalPrice = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, checkout }}>

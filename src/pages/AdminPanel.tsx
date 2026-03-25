@@ -320,9 +320,9 @@ export default function AdminPanel() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-white font-bold text-sm">₹{(order.payable_amount || 0).toFixed(2)}</span>
+                        <span className="text-white font-bold text-sm">₹{Number(order.payable_amount || 0).toFixed(2)}</span>
                         <span className="text-[10px] text-gray-500 uppercase tracking-wider">
-                          {order.payment_method === 'advance' ? `Bal: ₹${((order.total_price || 0) - (order.payable_amount || 0)).toFixed(2)}` : 'Full Paid'}
+                          {order.payment_method === 'advance' ? `Bal: ₹${(Number(order.total_price || 0) - Number(order.payable_amount || 0)).toFixed(2)}` : 'Full Paid'}
                         </span>
                       </div>
                     </td>
@@ -436,12 +436,12 @@ export default function AdminPanel() {
                         {order.payment_method === 'advance' && (
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Due:</span>
-                            <span className="text-gray-400 text-sm">₹${((order.total_price || 0) - (order.payable_amount || 0)).toFixed(2)}</span>
+                            <span className="text-gray-400 text-sm">₹${(Number(order.total_price || 0) - Number(order.payable_amount || 0)).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold text-white">₹{(order.total_price || 0).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-white">₹{Number(order.total_price || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
                       <button 
                         onClick={() => handleUpdateStatus(order.id, order.status === 'pending' ? 'confirmed' : 'pending')}
@@ -999,7 +999,7 @@ export default function AdminPanel() {
                       )}
                       <div className="pt-3 border-t border-white/5 flex justify-between items-center">
                         <span className="text-gray-400 text-sm">Payable Amount</span>
-                        <span className="text-primary-brown font-bold text-lg">₹{(selectedOrder.payable_amount || 0).toFixed(2)}</span>
+                        <span className="text-primary-brown font-bold text-lg">₹{Number(selectedOrder.payable_amount || 0).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -1015,13 +1015,13 @@ export default function AdminPanel() {
                         <p className="text-white font-bold text-sm">{item.name}</p>
                         <p className="text-gray-500 text-xs">₹{item.price} x {item.quantity}</p>
                       </div>
-                      <p className="text-white font-bold">₹{((item.price || 0) * item.quantity).toFixed(2)}</p>
+                      <p className="text-white font-bold">₹{(Number(item.price || 0) * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 flex justify-between items-center px-4">
                   <span className="text-gray-400 font-bold">Total Order Value</span>
-                  <span className="text-2xl font-bold text-white">₹{(selectedOrder.total_price || 0).toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-white">₹{Number(selectedOrder.total_price || 0).toFixed(2)}</span>
                 </div>
               </div>
 

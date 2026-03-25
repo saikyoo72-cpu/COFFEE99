@@ -111,7 +111,7 @@ export default function PaymentForm({ paymentMethod, title }: PaymentFormProps) 
               </div>
 
               <div className="mb-8">
-                <p className="text-white font-bold text-lg mb-2">Payable Amount: ₹{(payableAmount || 0).toFixed(2)}</p>
+                <p className="text-white font-bold text-lg mb-2">Payable Amount: ₹{Number(payableAmount || 0).toFixed(2)}</p>
                 <p className="text-sm text-gray-400 font-light max-w-xs mx-auto">
                   Scan this QR code using any UPI app (PhonePe, Google Pay, Paytm) and complete the payment.
                 </p>
@@ -247,7 +247,7 @@ export default function PaymentForm({ paymentMethod, title }: PaymentFormProps) 
                     <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                   </div>
                 </div>
-                <span className="text-white font-bold">₹{((item.price || 0) * item.quantity).toFixed(2)}</span>
+                <span className="text-white font-bold">₹{(Number(item.price || 0) * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -255,15 +255,15 @@ export default function PaymentForm({ paymentMethod, title }: PaymentFormProps) 
           <div className="mt-8 pt-6 border-t border-white/10 space-y-3">
             <div className="flex justify-between text-gray-400">
               <span>Subtotal</span>
-              <span>₹{(totalPrice || 0).toFixed(2)}</span>
+              <span>₹{Number(totalPrice || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-white font-bold text-lg pt-2">
               <span>{paymentMethod === 'advance' ? '50% Payable Now' : 'Total Payable'}</span>
-              <span className="text-primary-brown">₹{(payableAmount || 0).toFixed(2)}</span>
+              <span className="text-primary-brown">₹{Number(payableAmount || 0).toFixed(2)}</span>
             </div>
             {paymentMethod === 'advance' && (
               <p className="text-[10px] text-gray-500 italic text-right mt-2">
-                Remaining ₹{( (totalPrice || 0) - (payableAmount || 0) ).toFixed(2)} to be paid at the restaurant.
+                Remaining ₹{( Number(totalPrice || 0) - Number(payableAmount || 0) ).toFixed(2)} to be paid at the restaurant.
               </p>
             )}
           </div>

@@ -109,7 +109,7 @@ export default function Cart() {
                           </div>
                           <p className="text-[10px] text-primary-brown font-bold uppercase tracking-widest mb-2">{item.branchName}</p>
                           <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">₹{(item.price || 0).toFixed(2)}</span>
+                            <span className="text-white font-bold">₹{Number(item.price || 0).toFixed(2)}</span>
                             <div className="flex items-center bg-black rounded-xl p-1">
                               <button
                                 onClick={() => updateQuantity(item.id, -1)}
@@ -138,7 +138,7 @@ export default function Cart() {
                 <div className="p-6 bg-latte-beige border-t border-white/5 space-y-4">
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-gray-400 font-light">Total Amount</span>
-                    <span className="text-2xl font-serif font-bold text-white">₹{(totalPrice || 0).toFixed(2)}</span>
+                    <span className="text-2xl font-serif font-bold text-white">₹{Number(totalPrice || 0).toFixed(2)}</span>
                   </div>
                   <button
                     onClick={() => {
