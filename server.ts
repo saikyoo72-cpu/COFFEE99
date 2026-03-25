@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -22,7 +23,12 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAn
 async function startServer() {
   const app = express();
   const PORT = 3000;
-
+  app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
   app.use(express.json());
   app.use(cookieParser("coffee99-secret-key"));
 
@@ -56,15 +62,7 @@ async function startServer() {
     }
     
     try {
-      // 1. Check Master Password first (Global override)
-      const masterPassword = process.env.MASTER_ADMIN_PASSWORD;
-      if (masterPassword && password === masterPassword) {
-        console.log(`[Auth] Master password used for branch: ${branchId}`);
-        setAdminCookie(res, branchId);
-        return res.json({ success: true });
-      }
-
-      // 2. Check if there's a custom password in the database for this branch
+      // 1. Check if there's a custom password in the database for this branch
       const { data: settings, error } = await supabaseAdmin
         .from("admin_settings")
         .select("password")
