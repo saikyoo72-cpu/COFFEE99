@@ -24,7 +24,7 @@ const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 
 // Loading fallback component
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-beige">
+  <div className="min-h-screen flex items-center justify-center bg-cream-bg">
     <div className="w-12 h-12 border-4 border-primary-brown border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
@@ -37,7 +37,7 @@ export default function App() {
           <CartProvider>
             <Router>
               <ScrollToHash />
-              <div className="min-h-screen bg-beige font-sans selection:bg-brand-red/10 selection:text-brand-red">
+              <div className="min-h-screen bg-cream-bg font-sans">
                 <Navbar />
                 <main>
                   <Suspense fallback={<PageLoader />}>

@@ -84,10 +84,12 @@ export default function Home() {
       addReview(newReview);
       setNewReview({ name: '', text: '', rating: 5 });
       setShowReviewForm(false);
-      // Switch to the new review
+      // Switch to the new review (which will be at the end of the array)
       setCurrentTestimonial(reviews.length);
     }
   };
+
+  const currentReview = reviews[currentTestimonial] || reviews[0];
 
   return (
     <div className="overflow-x-hidden">
@@ -221,15 +223,15 @@ export default function Home() {
                   className="text-center"
                 >
                   <div className="flex justify-center gap-1 mb-6">
-                    {[...Array(reviews[currentTestimonial].rating)].map((_, i) => (
+                    {[...Array(currentReview?.rating || 5)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 fill-white text-white" />
                     ))}
                   </div>
                   <p className="text-2xl md:text-4xl font-serif italic text-white mb-8 leading-relaxed">
-                    "{reviews[currentTestimonial].text}"
+                    "{currentReview?.text}"
                   </p>
                   <h4 className="text-lg font-bold text-black uppercase tracking-widest">
-                    {reviews[currentTestimonial].name}
+                    {currentReview?.name}
                   </h4>
                 </motion.div>
               </AnimatePresence>

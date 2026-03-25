@@ -30,8 +30,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('coffee99_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('coffee99_cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (e) {
+      console.error('Error parsing saved cart:', e);
+      return [];
+    }
   });
 
   useEffect(() => {
