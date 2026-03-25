@@ -227,7 +227,9 @@ app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
 });
 
 async function setupApp() {
+  console.log(`Setting up app in ${process.env.NODE_ENV || "development"} mode`);
   if (process.env.NODE_ENV !== "production") {
+    console.log("Using Vite middleware");
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -236,6 +238,7 @@ async function setupApp() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    console.log(`Serving static files from ${distPath}`);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
