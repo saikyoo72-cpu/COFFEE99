@@ -8,7 +8,6 @@ import AuthModal from './AuthModal';
 
 const navLinks = [
   { name: 'Home', path: '/' },
-  { name: 'Menu', path: '/branch/shivmandir/menu' },
   { name: 'About Us', path: '/#about' },
 ];
 
