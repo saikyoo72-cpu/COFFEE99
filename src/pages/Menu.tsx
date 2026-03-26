@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, ShoppingBag } from 'lucide-react';
 import { fullMenu } from '../data';
 import { useCart } from '../context/CartContext';
+import { parsePrice } from '../utils/price';
 
 export default function Menu() {
   const { addToCart } = useCart();
@@ -117,14 +118,10 @@ export default function Menu() {
                 <motion.button 
                   whileTap={{ scale: 0.95 }}
                     onClick={() => {
-                      // Robust price parsing (handles "Rs. 90/-", "₹119", "₹80 / ₹90")
-                      const match = item.price.match(/\d+(\.\d+)?/);
-                      const parsedPrice = match ? parseFloat(match[0]) : 0;
-                      
                       addToCart({
                         id: `menu-${item.categoryTitle}-${idx}`,
                         name: item.name,
-                        price: parsedPrice,
+                        price: parsePrice(item.price),
                         branchName: 'Coffee99 Menu',
                         branchId: 'shivmandir',
                         image: item.image

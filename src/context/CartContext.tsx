@@ -1,17 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
+import { parsePrice } from '../utils/price';
 import { CartItem, Order } from '../types';
-
-// Move parsePrice to top level to avoid ReferenceError
-const parsePrice = (price: string | number | undefined): number => {
-  if (typeof price === 'number') return price;
-  if (!price) return 0;
-  // Remove currency symbols, commas, and other non-numeric characters except decimal point
-  const cleaned = String(price).replace(/[^\d.]/g, '');
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
-};
 
 interface CartContextType {
   cart: CartItem[];

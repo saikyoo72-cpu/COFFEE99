@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight } from 'lucide-react';
 import { branches } from '../data';
 import { useCart } from '../context/CartContext';
+import { parsePrice } from '../utils/price';
 
 export default function BranchMenu() {
   const { addToCart } = useCart();
@@ -141,14 +142,10 @@ export default function BranchMenu() {
                             <motion.button 
                               whileTap={{ scale: 0.9 }}
                               onClick={() => {
-                                // Robust price parsing (handles "Rs. 90/-", "₹119", "₹80 / ₹90")
-                                const match = item.price.match(/\d+(\.\d+)?/);
-                                const parsedPrice = match ? parseFloat(match[0]) : 0;
-                                
                                 addToCart({
                                   id: `${branch.id}-${item.name}`,
                                   name: item.name,
-                                  price: parsedPrice,
+                                  price: parsePrice(item.price),
                                   branchName: branch.name,
                                   branchId: branch.id,
                                   image: item.image
@@ -194,14 +191,10 @@ export default function BranchMenu() {
                       </div>
                       <button 
                         onClick={() => {
-                          // Robust price parsing (handles "Rs. 90/-", "₹119", "₹80 / ₹90")
-                          const match = item.price.match(/\d+(\.\d+)?/);
-                          const parsedPrice = match ? parseFloat(match[0]) : 0;
-                          
                           addToCart({
                             id: `${branch.id}-${item.name}`,
                             name: item.name,
-                            price: parsedPrice,
+                            price: parsePrice(item.price),
                             branchName: branch.name,
                             branchId: branch.id,
                             image: item.image
