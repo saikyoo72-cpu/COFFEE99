@@ -3,7 +3,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
-import path from "path";
+import path from 'path';
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -237,11 +237,11 @@ async function setupApp() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(process.cwd(), 'dist');
     console.log(`Serving static files from ${distPath}`);
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
