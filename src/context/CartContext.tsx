@@ -3,6 +3,16 @@ import { supabase } from '../supabase';
 import { useAuth } from './AuthContext';
 import { CartItem, Order } from '../types';
 
+// Move parsePrice to top level to avoid ReferenceError
+const parsePrice = (price: string | number | undefined): number => {
+  if (typeof price === 'number') return price;
+  if (!price) return 0;
+  // Remove currency symbols, commas, and other non-numeric characters except decimal point
+  const cleaned = String(price).replace(/[^\d.]/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: Omit<CartItem, 'quantity'>) => void;
@@ -134,15 +144,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   
-  const parsePrice = (p: any): number => {
-    if (typeof p === 'number') return p;
-    if (!p) return 0;
-    // Extract first number from string (handles "Rs. 90/-", "₹119", "₹80 / ₹90")
-    const match = String(p).match(/\d+(\.\d+)?/);
-    return match ? parseFloat(match[0]) : 0;
-  };
-
-  const totalPrice = cart.reduce((sum, item) => sum + (Number(item.price) || 0) * item.quantity, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, checkout }}>

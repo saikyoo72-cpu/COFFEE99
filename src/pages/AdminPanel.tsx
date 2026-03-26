@@ -431,12 +431,12 @@ export default function AdminPanel() {
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">Paid:</span>
-                          <span className="text-white font-bold text-sm">₹{(order.payable_amount || 0).toFixed(2)}</span>
+                          <span className="text-white font-bold text-sm">₹{Number(order.payable_amount || 0).toFixed(2)}</span>
                         </div>
                         {order.payment_method === 'advance' && (
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Due:</span>
-                            <span className="text-gray-400 text-sm">₹${(Number(order.total_price || 0) - Number(order.payable_amount || 0)).toFixed(2)}</span>
+                            <span className="text-gray-400 text-sm">₹{(Number(order.total_price || 0) - Number(order.payable_amount || 0)).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
