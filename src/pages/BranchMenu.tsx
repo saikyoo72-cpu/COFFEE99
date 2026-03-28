@@ -16,6 +16,9 @@ export default function BranchMenu() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (id) {
+      localStorage.setItem('coffee99_branch_id', id);
+    }
   }, [id]);
 
   if (!branch) {

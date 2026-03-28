@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Logo } from './Logo';
 import { Menu as MenuIcon, X, User, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,10 +8,13 @@ import AuthModal from './AuthModal';
 
 const navLinks = [
   { name: 'Home', path: '/' },
+  { name: 'Our Blogs', path: '/blogs' },
+  { name: 'For Creators', path: '/creator-program' },
   { name: 'About Us', path: '/#about' },
 ];
 
 export default function Navbar() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -31,12 +34,33 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     
     // Fetch dynamic store name (defaulting to shivmandir for branding)
-    fetch('/api/settings/shivmandir')
-      .then(res => res.json())
-      .then(data => {
+    const fetchStoreName = async (retries = 5) => {
+      try {
+        const url = '/api/settings/shivmandir';
+        console.log(`[Navbar] Fetching store name from: ${url} (Retries left: ${retries})`);
+        const res = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+        }
+        const data = await res.json();
+        console.log('[Navbar] Settings received:', data);
         if (data.store_name) setStoreName(data.store_name);
-      })
-      .catch(err => console.error('Error fetching store name:', err));
+      } catch (err) {
+        console.error('[Navbar] Error fetching store name:', err);
+        if (retries > 0) {
+          const delay = 2000 + (5 - retries) * 1000; // Exponential-ish backoff
+          console.log(`[Navbar] Retrying fetch store name in ${delay}ms... (${retries} retries left)`);
+          setTimeout(() => fetchStoreName(retries - 1), delay);
+        }
+      }
+    };
+    fetchStoreName();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

@@ -152,6 +152,7 @@ export default function AdminPanel() {
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId)
+        .eq('branch_id', branchId)
         .select()
         .single();
       
@@ -173,7 +174,8 @@ export default function AdminPanel() {
           const { error } = await supabase
             .from('orders')
             .delete()
-            .eq('id', orderId);
+            .eq('id', orderId)
+            .eq('branch_id', branchId);
           
           if (error) throw error;
           

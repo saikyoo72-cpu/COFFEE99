@@ -8,10 +8,33 @@ export default function Footer() {
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/settings/shivmandir')
-      .then(res => res.json())
-      .then(data => setSettings(data))
-      .catch(err => console.error('Error fetching footer settings:', err));
+    const fetchSettings = async (retries = 5) => {
+      try {
+        const url = '/api/settings/shivmandir';
+        console.log(`[Footer] Fetching settings from: ${url} (Retries left: ${retries})`);
+        const res = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+        }
+        const data = await res.json();
+        console.log('[Footer] Settings received:', data);
+        setSettings(data);
+      } catch (err) {
+        console.error('[Footer] Error fetching footer settings:', err);
+        if (retries > 0) {
+          const delay = 2000 + (5 - retries) * 1000; // Exponential-ish backoff
+          console.log(`[Footer] Retrying fetch footer settings in ${delay}ms... (${retries} retries left)`);
+          setTimeout(() => fetchSettings(retries - 1), delay);
+        }
+      }
+    };
+    fetchSettings();
   }, []);
 
   return (

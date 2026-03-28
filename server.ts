@@ -97,17 +97,42 @@ function setAdminCookie(res: any, branchId: string) {
 // Public Fetch Branch Settings
 app.get("/api/settings/:branchId", async (req, res) => {
   const { branchId } = req.params;
+  console.log(`[API] Fetching settings for branch: ${branchId}`);
+  
+  // Default fallback settings
+  const fallbackSettings = {
+    store_name: "Coffee99",
+    store_email: "contact@coffee99.com",
+    store_address: "Shivmandir, Siliguri, West Bengal"
+  };
+
   try {
+    if (!supabaseUrl || supabaseUrl.includes("mvzylepgbvfbgupanelf")) {
+      console.log(`[API] Using fallback settings for ${branchId} (Supabase not configured)`);
+      return res.json(fallbackSettings);
+    }
+
     const { data, error } = await supabaseAdmin
       .from("admin_settings")
       .select("store_name, store_email, store_address")
       .eq("branch_id", branchId)
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    res.json(data || {});
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.log(`[API] No settings found for ${branchId}, using fallback`);
+        return res.json(fallbackSettings);
+      }
+      console.error(`[Supabase Error] Fetching settings for ${branchId}:`, error);
+      throw error;
+    }
+    
+    console.log(`[API] Settings found for ${branchId}:`, !!data);
+    res.json(data || fallbackSettings);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error(`[API Error] Settings for ${branchId}:`, err.message);
+    // Always return something valid to prevent frontend "Failed to fetch" or JSON parse errors
+    res.json(fallbackSettings);
   }
 });
 
@@ -189,13 +214,14 @@ app.get("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
 
 // Update order status
 app.patch("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) => {
-  const { orderId } = req.params;
+  const { branchId, orderId } = req.params;
   const { status } = req.body;
   
   const { data, error } = await supabaseAdmin
     .from("orders")
     .update({ status })
     .eq("id", orderId)
+    .eq("branch_id", branchId)
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -204,11 +230,12 @@ app.patch("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) 
 
 // Delete an order
 app.delete("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) => {
-  const { orderId } = req.params;
+  const { branchId, orderId } = req.params;
   const { error } = await supabaseAdmin
     .from("orders")
     .delete()
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("branch_id", branchId);
 
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
@@ -226,29 +253,42 @@ app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
+// Start the server immediately
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[Server] Running on http://localhost:${PORT}`);
+});
+
+server.on('error', (err: any) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[Server Error] Port ${PORT} is already in use. This is unexpected.`);
+  } else {
+    console.error('[Server Error]', err);
+  }
+});
+
 async function setupApp() {
-  console.log(`Setting up app in ${process.env.NODE_ENV || "development"} mode`);
+  console.log(`[Server] Setting up app in ${process.env.NODE_ENV || "development"} mode`);
+  
   if (process.env.NODE_ENV !== "production") {
-    console.log("Using Vite middleware");
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    console.log("[Vite] Initializing Vite middleware...");
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      console.log("[Vite] Middleware initialized");
+    } catch (err) {
+      console.error("[Vite] Failed to initialize middleware:", err);
+    }
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    console.log(`Serving static files from ${distPath}`);
+    console.log(`[Server] Serving static files from ${distPath}`);
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-  // Start the server after setup is complete
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
 }
 
 setupApp();

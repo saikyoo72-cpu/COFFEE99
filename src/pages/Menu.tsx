@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, ShoppingBag } from 'lucide-react';
-import { fullMenu } from '../data';
+import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
 
@@ -9,6 +9,9 @@ export default function Menu() {
   const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+
+  const lastBranchId = localStorage.getItem('coffee99_branch_id') || 'shivmandir';
+  const lastBranch = branches.find(b => b.id === lastBranchId);
 
   const categories = ['All', ...fullMenu.map(c => c.title)];
 
@@ -122,8 +125,8 @@ export default function Menu() {
                         id: `menu-${item.categoryTitle}-${idx}`,
                         name: item.name,
                         price: parsePrice(item.price),
-                        branchName: 'Coffee99 Menu',
-                        branchId: 'shivmandir',
+                        branchName: lastBranch?.name || 'Coffee99 Menu',
+                        branchId: lastBranchId,
                         image: item.image
                       });
                     }}

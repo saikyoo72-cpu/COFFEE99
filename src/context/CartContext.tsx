@@ -52,6 +52,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     setCart((prevCart) => {
+      // If cart is not empty and the new item is from a different branch, clear the cart first.
+      // This ensures all items in a single order belong to the same branch.
+      if (prevCart.length > 0 && prevCart[0].branchId !== item.branchId) {
+        console.log('Branch mismatch. Clearing cart for new branch:', item.branchId);
+        return [{ ...item, price: parsePrice(item.price), quantity: 1 }];
+      }
+
       const existingItem = prevCart.find((i) => i.id === item.id);
       if (existingItem) {
         return prevCart.map((i) =>
