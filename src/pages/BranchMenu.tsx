@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight } from 'lucide-react';
+import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight, AlertCircle } from 'lucide-react';
 import { branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
+import { supabase } from '../supabase';
 
 export default function BranchMenu() {
   const { addToCart } = useCart();
@@ -12,14 +13,31 @@ export default function BranchMenu() {
   const branch = branches.find(b => b.id === id);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [outOfStockItems, setOutOfStockItems] = useState<string[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     if (id) {
       localStorage.setItem('coffee99_branch_id', id);
+      fetchAvailability();
     }
   }, [id]);
+
+  const fetchAvailability = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_availability')
+        .select('item_id')
+        .eq('branch_id', id)
+        .eq('is_available', false);
+
+      if (error) throw error;
+      setOutOfStockItems(data.map(d => d.item_id));
+    } catch (err) {
+      console.error('Error fetching availability:', err);
+    }
+  };
 
   if (!branch) {
     return <Navigate to="/" replace />;
@@ -116,51 +134,72 @@ export default function BranchMenu() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                      {category.items.map((item, itemIdx) => (
-                        <motion.div
-                          layout
-                          key={`${category.title}-${item.name}-${itemIdx}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: itemIdx * 0.05 }}
-                          className="bg-latte-beige rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 group relative border border-white/5"
-                          data-category={category.title.toLowerCase()}
-                        >
-                          {/* Content Section */}
-                          <div className="p-6 relative">
-                            <div className="flex justify-between items-start mb-2">
-                              <h3 className="text-lg font-serif font-bold text-white group-hover:text-primary-brown transition-colors leading-tight">
-                                {item.name}
-                              </h3>
-                              <span className="text-primary-brown font-bold text-lg">
-                                {item.price}
-                              </span>
-                            </div>
-                            
-                            <p className="text-gray-400 text-sm font-light mb-8 line-clamp-2 min-h-[40px]">
-                              {item.description}
-                            </p>
+                      {category.items.map((item, itemIdx) => {
+                        const itemId = `menu-${category.title}-${itemIdx}`;
+                        const isOutOfStock = outOfStockItems.includes(itemId);
 
-                            {/* Add Button */}
-                            <motion.button 
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => {
-                                addToCart({
-                                  id: `${branch.id}-${item.name}`,
-                                  name: item.name,
-                                  price: parsePrice(item.price),
-                                  branchName: branch.name,
-                                  branchId: branch.id,
-                                  image: item.image
-                                });
-                              }}
-                              className="absolute bottom-6 right-6 w-10 h-10 bg-primary-brown text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary-brown/20 hover:bg-white hover:text-black transition-all"
-                            >
-                              <Plus className="h-6 w-6" />
-                            </motion.button>
-                          </div>
-                        </motion.div>
-                      ))}
+                        return (
+                          <motion.div
+                            layout
+                            key={`${category.title}-${item.name}-${itemIdx}`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: itemIdx * 0.05 }}
+                            className={`bg-latte-beige rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 group relative border ${
+                              isOutOfStock ? 'border-red-500/20 opacity-80' : 'border-white/5'
+                            }`}
+                            data-category={category.title.toLowerCase()}
+                          >
+                            {/* Content Section */}
+                            <div className="p-6 relative">
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className={`text-lg font-serif font-bold group-hover:text-primary-brown transition-colors leading-tight ${
+                                  isOutOfStock ? 'text-gray-500' : 'text-white'
+                                }`}>
+                                  {item.name}
+                                </h3>
+                                <span className={`font-bold text-lg ${isOutOfStock ? 'text-gray-600' : 'text-primary-brown'}`}>
+                                  {item.price}
+                                </span>
+                              </div>
+                              
+                              <p className="text-gray-400 text-sm font-light mb-8 line-clamp-2 min-h-[40px]">
+                                {item.description}
+                              </p>
+
+                              {isOutOfStock && (
+                                <div className="absolute top-4 right-4 bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" /> Out of Stock
+                                </div>
+                              )}
+
+                              {/* Add Button */}
+                              <motion.button 
+                                whileTap={isOutOfStock ? {} : { scale: 0.9 }}
+                                disabled={isOutOfStock}
+                                onClick={() => {
+                                  if (isOutOfStock) return;
+                                  addToCart({
+                                    id: `${branch.id}-${item.name}`,
+                                    name: item.name,
+                                    price: parsePrice(item.price),
+                                    branchName: branch.name,
+                                    branchId: branch.id,
+                                    image: item.image
+                                  });
+                                }}
+                                className={`absolute bottom-6 right-6 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all ${
+                                  isOutOfStock 
+                                    ? 'bg-gray-800 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-primary-brown text-white shadow-primary-brown/20 hover:bg-white hover:text-black'
+                                }`}
+                              >
+                                <Plus className="h-6 w-6" />
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))

@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShoppingBag } from 'lucide-react';
+import { Search, ShoppingBag, AlertCircle } from 'lucide-react';
 import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
+import { supabase } from '../supabase';
 
 export default function Menu() {
   const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [outOfStockItems, setOutOfStockItems] = useState<string[]>([]);
 
   const lastBranchId = localStorage.getItem('coffee99_branch_id') || 'shivmandir';
   const lastBranch = branches.find(b => b.id === lastBranchId);
 
+  useEffect(() => {
+    fetchAvailability();
+  }, [lastBranchId]);
+
+  const fetchAvailability = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_availability')
+        .select('item_id')
+        .eq('branch_id', lastBranchId)
+        .eq('is_available', false);
+
+      if (error) throw error;
+      setOutOfStockItems(data.map(d => d.item_id));
+    } catch (err) {
+      console.error('Error fetching availability:', err);
+    }
+  };
+
   const categories = ['All', ...fullMenu.map(c => c.title)];
 
   const allItems = fullMenu.flatMap(category => 
-    category.items.map(item => ({ ...item, categoryTitle: category.title }))
+    category.items.map((item, idx) => ({ 
+      ...item, 
+      categoryTitle: category.title,
+      itemId: `menu-${category.title}-${idx}`
+    }))
   );
 
   const filteredItems = allItems.filter(item => {
@@ -93,36 +118,48 @@ export default function Menu() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           <AnimatePresence mode="popLayout">
-            {filteredItems.map((item, idx) => (
-              <motion.div
-                layout
-                key={`${item.categoryTitle}-${item.name}-${idx}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                variants={{
-                  hidden: { opacity: 0, y: 20, scale: 0.95 },
-                  visible: { opacity: 1, y: 0, scale: 1 }
-                }}
-                transition={{ duration: 0.5 }}
-                className={`bg-latte-beige rounded-[32px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:-translate-y-2 hover:shadow-2xl transition-all duration-500 ${
-                  item.highlight ? 'ring-2 ring-caramel ring-offset-4 ring-offset-cream-bg' : ''
-                }`}
-                data-category={item.categoryTitle.toLowerCase()}
-              >
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-serif font-bold text-dark-roast">{item.name}</h3>
-                  <span className="text-caramel font-bold">{item.price}</span>
-                </div>
-                <p className="text-slate-400 text-xs font-light mb-6 leading-relaxed">
-                  {item.description}
-                </p>
-                <motion.button 
-                  whileTap={{ scale: 0.95 }}
+            {filteredItems.map((item, idx) => {
+              const isOutOfStock = outOfStockItems.includes(item.itemId);
+              
+              return (
+                <motion.div
+                  layout
+                  key={`${item.categoryTitle}-${item.name}-${idx}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  variants={{
+                    hidden: { opacity: 0, y: 20, scale: 0.95 },
+                    visible: { opacity: 1, y: 0, scale: 1 }
+                  }}
+                  transition={{ duration: 0.5 }}
+                  className={`bg-latte-beige rounded-[32px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:-translate-y-2 hover:shadow-2xl transition-all duration-500 relative ${
+                    item.highlight ? 'ring-2 ring-caramel ring-offset-4 ring-offset-cream-bg' : ''
+                  } ${isOutOfStock ? 'opacity-80' : ''}`}
+                  data-category={item.categoryTitle.toLowerCase()}
+                >
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className={`text-lg font-serif font-bold ${isOutOfStock ? 'text-gray-500' : 'text-dark-roast'}`}>{item.name}</h3>
+                    <span className={`font-bold ${isOutOfStock ? 'text-gray-600' : 'text-caramel'}`}>{item.price}</span>
+                  </div>
+                  <p className="text-slate-400 text-xs font-light mb-6 leading-relaxed">
+                    {item.description}
+                  </p>
+
+                  {isOutOfStock && (
+                    <div className="absolute top-4 right-4 bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> Out of Stock
+                    </div>
+                  )}
+
+                  <motion.button 
+                    whileTap={isOutOfStock ? {} : { scale: 0.95 }}
+                    disabled={isOutOfStock}
                     onClick={() => {
+                      if (isOutOfStock) return;
                       addToCart({
-                        id: `menu-${item.categoryTitle}-${idx}`,
+                        id: item.itemId,
                         name: item.name,
                         price: parsePrice(item.price),
                         branchName: lastBranch?.name || 'Coffee99 Menu',
@@ -130,18 +167,21 @@ export default function Menu() {
                         image: item.image
                       });
                     }}
-                  className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                    item.highlight 
-                      ? 'bg-primary-brown text-white hover:bg-dark-roast' 
-                      : 'bg-cream-bg text-primary-brown hover:bg-primary-brown hover:text-white'
-                  }`}
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  Add to Cart
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
+                    className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                      isOutOfStock 
+                        ? 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                        : item.highlight 
+                          ? 'bg-primary-brown text-white hover:bg-dark-roast' 
+                          : 'bg-cream-bg text-primary-brown hover:bg-primary-brown hover:text-white'
+                    }`}
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                  </motion.button>
+                </div>
+              </motion.div>
+            );
+          })}
           </AnimatePresence>
         </motion.div>
 

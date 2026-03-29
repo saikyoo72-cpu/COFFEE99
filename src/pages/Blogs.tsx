@@ -2,7 +2,62 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '../components/Logo';
-import { ArrowLeft, Play, User, Clock, Eye, Search, Instagram, ExternalLink, PlayCircle, Plus, X as CloseIcon, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Play, User, Clock, Eye, Search, Instagram, ExternalLink, PlayCircle, Plus, X as CloseIcon, CheckCircle2, Trash2, LogIn, LogOut } from 'lucide-react';
+import { auth, db, signInWithGoogle, logout } from '../firebase';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+
+// Error Handling Spec for Firestore Operations
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const videos = [
   {
@@ -107,26 +162,39 @@ const shorts = [
 ];
 
 const VideoSkeleton = () => (
-  <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden animate-pulse">
-    <div className="aspect-video bg-white/5" />
+  <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/5">
+    <div className="aspect-video bg-white/5 animate-pulse" />
     <div className="p-4 flex gap-3">
-      <div className="w-10 h-10 rounded-full bg-white/5 shrink-0" />
+      <div className="w-10 h-10 rounded-full bg-white/5 shrink-0 animate-pulse" />
       <div className="flex-grow space-y-2">
-        <div className="h-4 bg-white/5 rounded w-3/4" />
-        <div className="h-3 bg-white/5 rounded w-1/2" />
+        <div className="h-4 bg-white/5 rounded w-3/4 animate-pulse" />
+        <div className="h-3 bg-white/5 rounded w-1/2 animate-pulse" />
       </div>
     </div>
   </div>
 );
 
 const ShortSkeleton = () => (
-  <div className="min-w-[160px] sm:min-w-[200px] aspect-[9/16] bg-[#1a1a1a] rounded-2xl animate-pulse" />
+  <div className="min-w-[140px] sm:min-w-[180px] aspect-[9/16] bg-[#1a1a1a] rounded-2xl border border-white/5 relative overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent animate-shimmer" />
+    <div className="absolute bottom-4 left-4 right-4 space-y-2">
+      <div className="h-3 bg-white/5 rounded w-3/4 animate-pulse" />
+      <div className="h-2 bg-white/5 rounded w-1/2 animate-pulse" />
+    </div>
+  </div>
 );
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR_pL_Y_X_X_X/pub?output=csv'; // Placeholder for user to replace
+const SUBMIT_URL = ''; // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
 
 const parseVideoUrl = (url: string) => {
   if (!url) return { embedUrl: '', type: 'unknown' };
+
+  // YouTube Shorts
+  if (url.includes('youtube.com/shorts/')) {
+    const ytShortMatch = url.match(/shorts\/([^"&?\/\s]{11})/);
+    if (ytShortMatch) return { embedUrl: `https://www.youtube.com/embed/${ytShortMatch[1]}`, type: 'short' };
+  }
 
   // YouTube
   const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
@@ -135,7 +203,10 @@ const parseVideoUrl = (url: string) => {
   // Instagram
   if (url.includes('instagram.com')) {
     const igMatch = url.match(/instagram\.com\/(?:p|reel)\/([^\/?#&]+)/);
-    if (igMatch) return { embedUrl: `https://www.instagram.com/p/${igMatch[1]}/embed`, type: 'instagram' };
+    if (igMatch) {
+      const type = url.includes('/reel/') ? 'short' : 'instagram';
+      return { embedUrl: `https://www.instagram.com/p/${igMatch[1]}/embed`, type };
+    }
   }
 
   // Facebook
@@ -153,83 +224,112 @@ export default function Blogs() {
   const [dynamicShorts, setDynamicShorts] = useState<any[]>([]);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({ link: '', creator: '', title: '' });
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAuthReady(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        console.log('Sign-in popup was closed by the user.');
+        return;
+      }
+      console.error('Sign-in error:', error);
+    }
+  };
+
+  const handleDelete = async (videoId: string, type: 'short' | 'video') => {
+    if (window.confirm('Are you sure you want to delete this video?')) {
+      try {
+        await deleteDoc(doc(db, 'videos', videoId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `videos/${videoId}`);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+      handleSignIn();
+      return;
+    }
     
     const { embedUrl, type: videoType } = parseVideoUrl(formData.link);
     
-    const newVideo = {
-      id: `new-${Date.now()}`,
+    const videoData = {
       title: formData.title || "New Submission",
-      creator: formData.creator || "Coffee Creator",
-      creatorAvatar: `https://picsum.photos/seed/${formData.creator}/100/100`,
+      creator: formData.creator || currentUser.displayName || "Coffee Creator",
+      creatorAvatar: currentUser.photoURL || `https://picsum.photos/seed/${formData.creator}/100/100`,
       embedUrl,
       type: videoType,
       views: "0 views",
-      postedAt: "Just now"
+      postedAt: serverTimestamp(),
+      authorUid: currentUser.uid
     };
 
-    // Optimistic update: Add to local state so it appears immediately for the user
-    if (videoType === 'short') {
-      setDynamicShorts(prev => [newVideo, ...prev]);
-    } else {
-      setDynamicVideos(prev => [newVideo, ...prev]);
-    }
-
-    setIsSubmitted(true);
-    
-    // In a real scenario, you would also fetch(SHEET_SUBMIT_URL, { method: 'POST', body: JSON.stringify(formData) })
-    
-    setTimeout(() => {
+    try {
+      setIsUploading(true);
+      await addDoc(collection(db, 'videos'), videoData);
+      
+      setIsUploading(false);
+      setIsSubmitted(true);
+      
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setIsSubmitModalOpen(false);
+        setFormData({ link: '', creator: '', title: '' });
+      }, 2500);
+    } catch (error) {
+      setIsUploading(false);
       setIsSubmitted(false);
-      setIsSubmitModalOpen(false);
-      setFormData({ link: '', creator: '', title: '' });
-    }, 2500);
+      handleFirestoreError(error, OperationType.CREATE, 'videos');
+    }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!isAuthReady) return;
+
+    // Test connection
+    const testConnection = async () => {
       try {
-        // In a real scenario, the user would provide a valid published CSV URL
-        // For now, we'll try to fetch and fallback to hardcoded data if it fails
-        const response = await fetch(SHEET_URL);
-        if (!response.ok) throw new Error('Sheet not found');
-        
-        const csvText = await response.text();
-        const rows = csvText.split('\n').slice(1); // Skip header
-        
-        const fetchedVideos = rows.map((row, index) => {
-          const [link, creator, title, type] = row.split(',').map(s => s.trim());
-          const { embedUrl, type: videoType } = parseVideoUrl(link);
-          
-          return {
-            id: `dynamic-${index}`,
-            title: title || "Creator Video",
-            creator: creator || "Coffee Creator",
-            creatorAvatar: `https://picsum.photos/seed/${creator}/100/100`,
-            embedUrl,
-            type: videoType,
-            views: `${Math.floor(Math.random() * 5000)} views`,
-            postedAt: "Recently"
-          };
-        });
-
-        setDynamicVideos(fetchedVideos.filter(v => v.type !== 'short'));
-        setDynamicShorts(fetchedVideos.filter(v => v.type === 'short'));
+        await getDocFromServer(doc(db, 'test', 'connection'));
       } catch (error) {
-        console.log('Using fallback data as dynamic source is not configured yet');
-        // Fallback to initial data if fetch fails
-        setDynamicVideos(videos);
-        setDynamicShorts(shorts);
-      } finally {
-        setIsLoading(false);
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. ");
+        }
       }
-    };
+    }
+    testConnection();
 
-    fetchData();
-  }, []);
+    const q = query(collection(db, 'videos'), orderBy('postedAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedVideos = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setDynamicVideos(fetchedVideos.filter((v: any) => v.type !== 'short'));
+      setDynamicShorts(fetchedVideos.filter((v: any) => v.type === 'short'));
+      setIsLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'videos');
+    });
+
+    return () => unsubscribe();
+  }, [isAuthReady]);
 
   const filteredVideos = dynamicVideos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,6 +365,23 @@ export default function Blogs() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {currentUser ? (
+              <button 
+                onClick={() => logout()}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-medium transition-all duration-300 border border-white/5 group"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => handleSignIn()}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-medium transition-all duration-300 border border-white/5 group"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign In</span>
+              </button>
+            )}
             <button 
               onClick={() => setIsSubmitModalOpen(true)}
               className="flex items-center gap-2 px-3 sm:px-5 py-2 bg-[#ff3c3c] hover:bg-[#ff5555] text-white rounded-full text-xs sm:text-sm font-bold transition-all shadow-lg shadow-[#ff3c3c]/20 active:scale-95 group"
@@ -359,9 +476,17 @@ export default function Blogs() {
 
                     <button 
                       type="submit"
-                      className="w-full py-4 bg-[#ff3c3c] hover:bg-[#ff5555] text-white rounded-2xl font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-[#ff3c3c]/20 active:scale-[0.98] mt-4"
+                      disabled={isUploading}
+                      className={`w-full py-4 bg-[#ff3c3c] hover:bg-[#ff5555] text-white rounded-2xl font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-[#ff3c3c]/20 active:scale-[0.98] mt-4 flex items-center justify-center gap-2 ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                      Submit Link
+                      {isUploading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        'Submit Link'
+                      )}
                     </button>
                   </form>
                 </>
@@ -452,29 +577,39 @@ export default function Blogs() {
                     transition={{ delay: idx * 0.03 }}
                     className="min-w-[140px] sm:min-w-[180px] aspect-[9/16] relative rounded-2xl overflow-hidden group snap-start cursor-pointer border border-white/5"
                   >
-                    <img 
-                      src={short.thumbnail || `https://picsum.photos/seed/${short.id}/400/711`} 
-                      alt={short.caption}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-full h-full bg-[#1a1a1a]">
+                      <iframe
+                        src={short.embedUrl}
+                        title={short.caption || short.title}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
                     
-                    <div className="absolute bottom-0 p-4 w-full">
-                      <p className="text-sm font-medium line-clamp-2 mb-2 group-hover:text-[#ff3c3c] transition-colors">
+                    <div className="absolute bottom-0 p-4 w-full bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none">
+                      <p className="text-xs font-medium line-clamp-2 mb-1 group-hover:text-[#ff3c3c] transition-colors">
                         {short.caption || short.title}
                       </p>
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-300 font-bold uppercase tracking-wider">
-                        <Eye className="h-3 w-3" />
-                        {short.views} views
+                      <div className="flex items-center gap-1.5 text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                        <Eye className="h-2.5 w-2.5" />
+                        {short.views}
                       </div>
                     </div>
 
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-12 h-12 bg-[#ff3c3c] rounded-full flex items-center justify-center shadow-xl shadow-[#ff3c3c]/20">
-                        <Play className="h-6 w-6 fill-white" />
-                      </div>
-                    </div>
+                    {/* Delete Button for Creator */}
+                    {currentUser?.uid === short.authorUid && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(short.id, 'short');
+                        }}
+                        className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-red-600 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                        title="Delete Short"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </motion.div>
                 ))
               )}
@@ -524,9 +659,23 @@ export default function Blogs() {
                       </div>
                     </div>
                     <div className="flex-grow">
-                      <h3 className="font-bold text-base leading-snug mb-1 line-clamp-2 group-hover:text-[#ff3c3c] transition-colors">
-                        {video.title}
-                      </h3>
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-bold text-base leading-snug mb-1 line-clamp-2 group-hover:text-[#ff3c3c] transition-colors">
+                          {video.title}
+                        </h3>
+                        {currentUser?.uid === video.authorUid && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(video.id, 'video');
+                            }}
+                            className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
+                            title="Delete Video"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                       <div className="flex flex-col text-sm text-gray-400">
                         <span className="hover:text-white transition-colors">{video.creator}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -544,7 +693,7 @@ export default function Blogs() {
         </section>
       </main>
 
-      {/* Custom Styles for Hide Scrollbar */}
+      {/* Custom Styles for Hide Scrollbar and Shimmer */}
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -552,6 +701,13 @@ export default function Blogs() {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        @keyframes shimmer {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
         }
       `}</style>
     </div>

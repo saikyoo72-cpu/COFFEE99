@@ -28,7 +28,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-type Tab = 'dashboard' | 'orders' | 'customers' | 'settings';
+type Tab = 'dashboard' | 'orders' | 'customers' | 'menu' | 'settings';
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -46,6 +46,9 @@ export default function AdminPanel() {
     isDanger?: boolean;
   } | null>(null);
 
+  const [outOfStockItems, setOutOfStockItems] = useState<string[]>([]);
+  const [isUpdatingMenu, setIsUpdatingMenu] = useState<string | null>(null);
+
   const branch = branches.find(b => b.id === branchId);
   const [storeName, setStoreName] = useState<string>(branch?.name || 'Coffee 99');
 
@@ -60,6 +63,7 @@ export default function AdminPanel() {
         return;
       }
       fetchData();
+      fetchMenuAvailability();
     };
 
     checkAuth();
@@ -244,6 +248,177 @@ export default function AdminPanel() {
       status: customerOrders.length > 5 ? 'VIP' : 'Active'
     };
   });
+
+  const [menuSearchQuery, setMenuSearchQuery] = useState('');
+
+  const fetchMenuAvailability = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_availability')
+        .select('item_id')
+        .eq('branch_id', branchId)
+        .eq('is_available', false);
+
+      if (error) throw error;
+      setOutOfStockItems(data.map(d => d.item_id));
+    } catch (err) {
+      console.error('Fetch menu availability error:', err);
+    }
+  };
+
+  const toggleItemAvailability = async (itemId: string, currentStatus: boolean) => {
+    setIsUpdatingMenu(itemId);
+    try {
+      const { error } = await supabase
+        .from('menu_availability')
+        .upsert({
+          branch_id: branchId,
+          item_id: itemId,
+          is_available: !currentStatus,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'branch_id,item_id' });
+
+      if (error) throw error;
+
+      setOutOfStockItems(prev => 
+        currentStatus 
+          ? [...prev, itemId] // Now out of stock
+          : prev.filter(id => id !== itemId) // Now in stock
+      );
+    } catch (err) {
+      console.error('Toggle availability error:', err);
+      alert('Failed to update availability. Please try again.');
+    } finally {
+      setIsUpdatingMenu(null);
+    }
+  };
+
+  const renderMenuManagement = () => {
+    const menu = branch?.menu || [];
+    
+    const filteredMenu = menu.map(category => ({
+      ...category,
+      items: category.items.filter(item => 
+        item.name.toLowerCase().includes(menuSearchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(menuSearchQuery.toLowerCase())
+      )
+    })).filter(category => category.items.length > 0);
+    
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Menu Management</h2>
+            <p className="text-gray-400 text-sm">Manage item availability for this branch</p>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <input 
+              type="text" 
+              placeholder="Search menu items..." 
+              value={menuSearchQuery}
+              onChange={(e) => setMenuSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-soft-cream border border-white/10 text-white rounded-xl outline-none focus:border-primary-brown transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8">
+          {filteredMenu.length === 0 ? (
+            <div className="text-center py-20 bg-soft-cream rounded-3xl border border-dashed border-white/10">
+              <p className="text-gray-500 italic">No menu items found matching "{menuSearchQuery}"</p>
+            </div>
+          ) : (
+            filteredMenu.map((category, catIdx) => (
+              <div key={catIdx} className="space-y-4">
+                <h3 className="text-lg font-bold text-primary-brown flex items-center gap-2">
+                  <span className="w-8 h-px bg-primary-brown/30"></span>
+                  {category.title}
+                  <span className="flex-grow h-px bg-primary-brown/30"></span>
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {category.items.map((item, itemIdx) => {
+                    const itemId = `menu-${category.title}-${itemIdx}`;
+                    const isOutOfStock = outOfStockItems.includes(itemId);
+                    
+                    return (
+                      <motion.div
+                        key={itemId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: itemIdx * 0.05 }}
+                        className={`bg-soft-cream p-4 rounded-2xl border transition-all ${
+                          isOutOfStock ? 'border-red-500/20 opacity-75' : 'border-white/5'
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                            <img 
+                              src={item.image} 
+                              alt={item.name}
+                              className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale' : ''}`}
+                              referrerPolicy="no-referrer"
+                            />
+                            {isOutOfStock && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-[8px] font-bold text-white uppercase tracking-tighter">Out of Stock</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-grow flex flex-col justify-between py-1">
+                            <div>
+                              <div className="flex justify-between items-start">
+                                <h4 className={`font-bold text-sm ${isOutOfStock ? 'text-gray-500' : 'text-white'}`}>
+                                  {item.name}
+                                </h4>
+                                {item.isVeg && (
+                                  <div className="w-3 h-3 border border-green-500 flex items-center justify-center p-[1px]">
+                                    <div className="w-full h-full bg-green-500 rounded-full"></div>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-500 line-clamp-1 mt-1">{item.description}</p>
+                              <p className="text-xs font-bold text-primary-brown mt-1">{item.price}</p>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                                isOutOfStock ? 'text-red-500' : 'text-green-500'
+                              }`}>
+                                {isOutOfStock ? 'Out of Stock' : 'In Stock'}
+                              </span>
+                              
+                              <button
+                                onClick={() => toggleItemAvailability(itemId, !isOutOfStock)}
+                                disabled={isUpdatingMenu === itemId}
+                                className={`relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none ${
+                                  !isOutOfStock ? 'bg-green-500' : 'bg-gray-700'
+                                }`}
+                              >
+                                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ${
+                                  !isOutOfStock ? 'translate-x-5' : 'translate-x-0'
+                                } flex items-center justify-center`}>
+                                  {isUpdatingMenu === itemId && (
+                                    <Loader2 className="h-2 w-2 text-gray-400 animate-spin" />
+                                  )}
+                                </div>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderDashboard = () => (
     <div className="space-y-10">
@@ -750,6 +925,7 @@ export default function AdminPanel() {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'menu', label: 'Menu', icon: Menu },
     { id: 'customers', label: 'Customers', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -864,6 +1040,7 @@ export default function AdminPanel() {
             >
               {activeTab === 'dashboard' && renderDashboard()}
               {activeTab === 'orders' && renderOrders()}
+              {activeTab === 'menu' && renderMenuManagement()}
               {activeTab === 'customers' && renderCustomers()}
               {activeTab === 'settings' && renderSettings()}
             </motion.div>
