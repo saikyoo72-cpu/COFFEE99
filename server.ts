@@ -253,20 +253,47 @@ app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-// Start the server immediately
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[Server] Running on http://localhost:${PORT}`);
-});
+// Fetch menu availability
+app.get("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res) => {
+  const { branchId } = req.params;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("menu_availability")
+      .select("item_id")
+      .eq("branch_id", branchId)
+      .eq("is_available", false);
 
-server.on('error', (err: any) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`[Server Error] Port ${PORT} is already in use. This is unexpected.`);
-  } else {
-    console.error('[Server Error]', err);
+    if (error) throw error;
+    res.json(data.map((d: any) => d.item_id));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-async function setupApp() {
+// Update menu availability
+app.post("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res) => {
+  const { branchId } = req.params;
+  const { itemId, isAvailable } = req.body;
+  
+  try {
+    const { error } = await supabaseAdmin
+      .from("menu_availability")
+      .upsert({
+        branch_id: branchId,
+        item_id: itemId,
+        is_available: isAvailable,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'branch_id,item_id' });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start the server
+async function startServer() {
   console.log(`[Server] Setting up app in ${process.env.NODE_ENV || "development"} mode`);
   
   if (process.env.NODE_ENV !== "production") {
@@ -289,8 +316,18 @@ async function setupApp() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // Global error handler
+  app.use((err: any, req: any, res: any, next: any) => {
+    console.error("[Global Error]", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  });
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[Server] Running on http://localhost:${PORT}`);
+  });
 }
 
-setupApp();
+startServer();
 
 export default app;

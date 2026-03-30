@@ -336,6 +336,20 @@ export default function Blogs() {
     video.creator.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const formatDate = (date: any) => {
+    if (!date) return '';
+    if (typeof date === 'string') return date;
+    // Handle Firestore Timestamp
+    if (date && typeof date === 'object' && 'seconds' in date) {
+      return new Date(date.seconds * 1000).toLocaleDateString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+    return String(date);
+  };
+
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white selection:bg-[#ff3c3c]/30">
       {/* Modern App-like Header with Search */}
@@ -681,7 +695,7 @@ export default function Blogs() {
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span>{video.views}</span>
                           <span className="w-1 h-1 bg-gray-600 rounded-full" />
-                          <span>{video.postedAt}</span>
+                          <span>{formatDate(video.postedAt)}</span>
                         </div>
                       </div>
                     </div>

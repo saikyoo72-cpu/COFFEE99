@@ -30,12 +30,12 @@ service cloud.firestore {
              data.keys().hasOnly(['title', 'creator', 'creatorAvatar', 'embedUrl', 'type', 'views', 'postedAt', 'authorUid']) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.creator is string && data.creator.size() > 0 && data.creator.size() < 100 &&
-             data.embedUrl is string && data.embedUrl.size() > 0 && data.embedUrl.size() < 1000 &&
-             data.type in ['youtube', 'instagram', 'facebook', 'short'] &&
+             data.embedUrl is string && data.embedUrl.size() > 0 && data.embedUrl.size() < 2000 &&
+             data.type in ['youtube', 'instagram', 'facebook', 'short', 'other'] &&
              data.authorUid == request.auth.uid &&
              (!('creatorAvatar' in data) || (data.creatorAvatar is string && data.creatorAvatar.size() < 1000)) &&
              (!('views' in data) || (data.views is string && data.views.size() < 50)) &&
-             (!('postedAt' in data) || (data.postedAt is timestamp));
+             (!('postedAt' in data) || (data.postedAt is timestamp || data.postedAt == null));
     }
 
     match /videos/{videoId} {

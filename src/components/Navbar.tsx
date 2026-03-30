@@ -36,7 +36,8 @@ export default function Navbar() {
     // Fetch dynamic store name (defaulting to shivmandir for branding)
     const fetchStoreName = async (retries = 5) => {
       try {
-        const url = '/api/settings/shivmandir';
+        // Use relative URL to avoid potential issues in some environments
+        const url = `/api/settings/shivmandir`;
         console.log(`[Navbar] Fetching store name from: ${url} (Retries left: ${retries})`);
         const res = await fetch(url, {
           headers: {
