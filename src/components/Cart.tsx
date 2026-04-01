@@ -57,7 +57,7 @@ export default function Cart() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-md bg-cream-bg shadow-2xl z-[70] flex flex-col"
+              className="fixed top-0 right-0 h-full w-full max-w-[340px] bg-cream-bg shadow-2xl z-[70] flex flex-col"
             >
               {/* Header */}
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-latte-beige">

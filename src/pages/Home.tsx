@@ -15,6 +15,7 @@ import {
 import { branches, testimonials } from '../data';
 import { slides } from '../heroSlider';
 import { useCart } from '../context/CartContext';
+import PromotionalCarousel from '../components/PromotionalCarousel';
 
 import { useReviews } from '../context/ReviewContext';
 
@@ -196,6 +197,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <PromotionalCarousel />
 
       {/* 6. CUSTOMER REVIEWS */}
       <section id="reviews" className="py-24 bg-primary-brown overflow-hidden">

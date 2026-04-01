@@ -11,23 +11,21 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+// Initialize Supabase Client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("[Server] Supabase credentials missing in environment variables.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 app.use(cookieParser("coffee99-secret-key"));
-
-// Initialize Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://mvzylepgbvfbgupanelf.supabase.co";
-const supabaseServiceKey = process.env.COFFEE99_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_zZLHCEtjVoL-tF-LevFu4Q_rPKjT6Qs";
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
 
 // Middleware to verify admin session
 const verifyAdmin = (req: any, res: any, next: any) => {
@@ -45,8 +43,7 @@ const verifyAdmin = (req: any, res: any, next: any) => {
 app.get("/api/health", (req, res) => {
   res.json({ 
     status: "ok", 
-    secureMode: !!supabaseServiceKey,
-    databaseUrl: !!supabaseUrl
+    supabase: true
   });
 });
 
@@ -59,15 +56,17 @@ app.post("/api/admin/login", async (req, res) => {
   }
   
   try {
-    const { data: settings, error } = await supabaseAdmin
+    const { data: settings, error } = await supabase
       .from("admin_settings")
-      .select("password")
+      .select("*")
       .eq("branch_id", branchId)
-      .single();
+      .maybeSingle();
+
+    if (error) throw error;
 
     let validPassword = process.env.ADMIN_PASSWORD || "aspirion007";
     
-    if (!error && settings && settings.password) {
+    if (settings && settings.password) {
       validPassword = settings.password;
     }
 
@@ -107,32 +106,29 @@ app.get("/api/settings/:branchId", async (req, res) => {
   };
 
   try {
-    if (!supabaseUrl || supabaseUrl.includes("mvzylepgbvfbgupanelf")) {
-      console.log(`[API] Using fallback settings for ${branchId} (Supabase not configured)`);
+    const { data: settings, error } = await supabase
+      .from("admin_settings")
+      .select("*")
+      .eq("branch_id", branchId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    if (!settings) {
+      console.log(`[API] No settings found for ${branchId}, using fallback`);
       return res.json(fallbackSettings);
     }
-
-    const { data, error } = await supabaseAdmin
-      .from("admin_settings")
-      .select("store_name, store_email, store_address")
-      .eq("branch_id", branchId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        console.log(`[API] No settings found for ${branchId}, using fallback`);
-        return res.json(fallbackSettings);
-      }
-      console.error(`[Supabase Error] Fetching settings for ${branchId}:`, error);
-      throw error;
-    }
     
-    console.log(`[API] Settings found for ${branchId}:`, !!data);
-    res.json(data || fallbackSettings);
+    console.log(`[API] Settings found for ${branchId}:`, !!settings);
+    res.json({
+      store_name: settings.store_name || fallbackSettings.store_name,
+      store_email: settings.store_email || fallbackSettings.store_email,
+      store_address: settings.store_address || fallbackSettings.store_address,
+      db_connected: true
+    });
   } catch (err: any) {
     console.error(`[API Error] Settings for ${branchId}:`, err.message);
-    // Always return something valid to prevent frontend "Failed to fetch" or JSON parse errors
-    res.json(fallbackSettings);
+    res.json({ ...fallbackSettings, db_connected: false });
   }
 });
 
@@ -152,11 +148,12 @@ app.post("/api/admin/update-settings/:branchId", verifyAdmin, async (req, res) =
     if (storeEmail) updates.store_email = storeEmail;
     if (storeAddress) updates.store_address = storeAddress;
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("admin_settings")
       .upsert(updates, { onConflict: 'branch_id' });
 
     if (error) throw error;
+
     res.json({ success: true, message: "Settings updated successfully" });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message || "Failed to update settings" });
@@ -167,14 +164,20 @@ app.post("/api/admin/update-settings/:branchId", verifyAdmin, async (req, res) =
 app.get("/api/admin/settings/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
   try {
-    const { data, error } = await supabaseAdmin
+    const { data: settings, error } = await supabase
       .from("admin_settings")
-      .select("store_name, store_email, store_address")
+      .select("*")
       .eq("branch_id", branchId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error;
-    res.json(data || {});
+      .maybeSingle();
+    
+    if (error) throw error;
+    if (!settings) return res.json({});
+    
+    res.json({
+      store_name: settings.store_name,
+      store_email: settings.store_email,
+      store_address: settings.store_address
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -202,69 +205,86 @@ app.post("/api/admin/logout/:branchId", (req, res) => {
 // Fetch all orders for a branch
 app.get("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
-  const { data, error } = await supabaseAdmin
-    .from("orders")
-    .select("*")
-    .eq("branch_id", branchId)
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("branch_id", branchId)
+      .order("created_at", { ascending: false });
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Update order status
 app.patch("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) => {
-  const { branchId, orderId } = req.params;
+  const { orderId } = req.params;
   const { status } = req.body;
   
-  const { data, error } = await supabaseAdmin
-    .from("orders")
-    .update({ status })
-    .eq("id", orderId)
-    .eq("branch_id", branchId)
-    .select();
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ status })
+      .eq("id", orderId)
+      .select()
+      .single();
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Delete an order
 app.delete("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) => {
-  const { branchId, orderId } = req.params;
-  const { error } = await supabaseAdmin
-    .from("orders")
-    .delete()
-    .eq("id", orderId)
-    .eq("branch_id", branchId);
+  const { orderId } = req.params;
+  try {
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Clear all orders for a branch
 app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
-  const { error } = await supabaseAdmin
-    .from("orders")
-    .delete()
-    .eq("branch_id", branchId);
+  try {
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("branch_id", branchId);
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Fetch menu availability
 app.get("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("menu_availability")
       .select("item_id")
       .eq("branch_id", branchId)
       .eq("is_available", false);
 
     if (error) throw error;
-    res.json(data.map((d: any) => d.item_id));
+
+    res.json(data.map(item => item.item_id));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -276,7 +296,7 @@ app.post("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res)
   const { itemId, isAvailable } = req.body;
   
   try {
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("menu_availability")
       .upsert({
         branch_id: branchId,
@@ -286,6 +306,7 @@ app.post("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res)
       }, { onConflict: 'branch_id,item_id' });
 
     if (error) throw error;
+
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

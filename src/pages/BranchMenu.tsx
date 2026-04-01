@@ -5,7 +5,8 @@ import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight, AlertCircle }
 import { branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
-import { supabase } from '../supabase';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function BranchMenu() {
   const { addToCart } = useCart();
@@ -26,14 +27,13 @@ export default function BranchMenu() {
 
   const fetchAvailability = async () => {
     try {
-      const { data, error } = await supabase
-        .from('menu_availability')
-        .select('item_id')
-        .eq('branch_id', id)
-        .eq('is_available', false);
-
-      if (error) throw error;
-      setOutOfStockItems(data.map(d => d.item_id));
+      const q = query(
+        collection(db, 'menu_availability'),
+        where('branch_id', '==', id),
+        where('is_available', '==', false)
+      );
+      const snapshot = await getDocs(q);
+      setOutOfStockItems(snapshot.docs.map(doc => doc.data().item_id));
     } catch (err) {
       console.error('Error fetching availability:', err);
     }

@@ -35,18 +35,39 @@ export default function TrackOrder() {
       fetchOrders();
       
       // Subscribe to real-time updates
-      const channelName = user ? `orders_user_${user.id}` : `orders_id_${searchId}`;
-      const filter = user ? `user_id=eq.${user.id}` : `id=eq.${searchId}`;
-
-      const subscription = supabase
-        .channel(channelName)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: filter }, () => {
-          fetchOrders();
-        })
-        .subscribe();
+      let channel;
+      if (user) {
+        channel = supabase
+          .channel('user-orders')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'orders',
+              filter: `user_id=eq.${user.id}`
+            },
+            () => fetchOrders()
+          )
+          .subscribe();
+      } else if (searchId && searchId.length > 10) { // Simple check for UUID-like string
+        channel = supabase
+          .channel('search-order')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'orders',
+              filter: `id=eq.${searchId}`
+            },
+            () => fetchOrders()
+          )
+          .subscribe();
+      }
 
       return () => {
-        supabase.removeChannel(subscription);
+        if (channel) supabase.removeChannel(channel);
       };
     } else {
       setLoading(false);
@@ -60,8 +81,7 @@ export default function TrackOrder() {
       
       if (user) {
         query = query.eq('user_id', user.id);
-      } else if (searchId) {
-        // If not logged in, only allow fetching by exact ID
+      } else if (searchId && searchId.length > 10) {
         query = query.eq('id', searchId);
       } else {
         setOrders([]);
@@ -70,13 +90,9 @@ export default function TrackOrder() {
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching orders:', error);
-        setOrders([]);
-      } else {
-        setOrders(data || []);
-      }
+      
+      if (error) throw error;
+      setOrders(data || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setOrders([]);
@@ -176,7 +192,11 @@ export default function TrackOrder() {
                     <div>
                       <p className="text-[10px] font-bold text-primary-brown uppercase tracking-widest mb-1">Order ID</p>
                       <h3 className="text-xl font-serif font-bold text-dark-roast">#{order.id.slice(0, 8).toUpperCase()}</h3>
-                      <p className="text-xs text-gray-500 font-light">{new Date(order.created_at).toLocaleString()}</p>
+                      <p className="text-xs text-gray-500 font-light">
+                        {order.created_at && typeof order.created_at.toDate === 'function' 
+                          ? order.created_at.toDate().toLocaleString() 
+                          : new Date(order.created_at).toLocaleString()}
+                      </p>
                     </div>
                   </div>
                   

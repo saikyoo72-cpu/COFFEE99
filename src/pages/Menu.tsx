@@ -4,7 +4,8 @@ import { Search, ShoppingBag, AlertCircle } from 'lucide-react';
 import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
-import { supabase } from '../supabase';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function Menu() {
   const { addToCart } = useCart();
@@ -21,14 +22,13 @@ export default function Menu() {
 
   const fetchAvailability = async () => {
     try {
-      const { data, error } = await supabase
-        .from('menu_availability')
-        .select('item_id')
-        .eq('branch_id', lastBranchId)
-        .eq('is_available', false);
-
-      if (error) throw error;
-      setOutOfStockItems(data.map(d => d.item_id));
+      const q = query(
+        collection(db, 'menu_availability'),
+        where('branch_id', '==', lastBranchId),
+        where('is_available', '==', false)
+      );
+      const snapshot = await getDocs(q);
+      setOutOfStockItems(snapshot.docs.map(doc => doc.data().item_id));
     } catch (err) {
       console.error('Error fetching availability:', err);
     }

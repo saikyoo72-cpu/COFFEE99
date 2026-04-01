@@ -69,10 +69,8 @@ export default function AdminPanel() {
     checkAuth();
 
     // Set up real-time subscription
-    setDebugInfo(prev => prev + `\n[${new Date().toLocaleTimeString()}] Initializing subscription for branch: ${branchId}`);
-    
     const channel = supabase
-      .channel(`admin_orders_${branchId}`)
+      .channel('orders-realtime')
       .on(
         'postgres_changes',
         {
@@ -82,40 +80,15 @@ export default function AdminPanel() {
           filter: `branch_id=eq.${branchId}`
         },
         (payload) => {
-          console.log('Real-time payload received:', payload);
-          setDebugInfo(prev => prev + `\n[${new Date().toLocaleTimeString()}] Event: ${payload.eventType} for ID: ${(payload.new as any)?.id || (payload.old as any)?.id}`);
-          
-          if (payload.eventType === 'INSERT') {
-            const newOrder = payload.new as Order;
-            setOrders(prev => {
-              if (prev.find(o => o.id === newOrder.id)) return prev;
-              return [newOrder, ...prev];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedOrder = payload.new as Order;
-            setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-          } else if (payload.eventType === 'DELETE') {
-            setOrders(prev => prev.filter(o => o.id === payload.old.id));
-          }
+          console.log('[Admin] Real-time change received:', payload);
+          fetchData();
         }
       )
-      .subscribe((status, err) => {
-        console.log(`Real-time subscription status for ${branchId}:`, status);
-        setRealtimeStatus(status);
-        if (err) {
-          setDebugInfo(prev => prev + `\n[${new Date().toLocaleTimeString()}] Error: ${err.message}`);
-        } else {
-          setDebugInfo(prev => prev + `\n[${new Date().toLocaleTimeString()}] Status changed to: ${status}`);
-        }
-        
-        if (status === 'CHANNEL_ERROR') {
-          console.error('Real-time subscription failed. Retrying in 5s...');
-          setTimeout(fetchData, 5000);
-        }
+      .subscribe((status) => {
+        setRealtimeStatus(status === 'SUBSCRIBED' ? 'SUBSCRIBED' : 'CHANNEL_ERROR');
       });
 
     return () => {
-      console.log(`Cleaning up real-time for branch: ${branchId}`);
       supabase.removeChannel(channel);
     };
   }, [navigate, branchId]);

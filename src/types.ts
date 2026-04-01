@@ -1,5 +1,3 @@
-import { User } from '@supabase/supabase-js';
-
 export interface CartItem {
   id: string;
   name: string;
@@ -21,7 +19,7 @@ export interface Order {
   items: CartItem[];
   total_price: number;
   status: OrderStatus;
-  created_at: string;
+  created_at: any;
   payment_method: 'advance' | 'full';
   payment_type: 'qr' | 'upi' | 'phonepe';
   payable_amount: number;
@@ -39,5 +37,5 @@ export interface Listing {
   description: string;
   image_url: string;
   price: number;
-  created_at: string;
+  created_at: any;
 }

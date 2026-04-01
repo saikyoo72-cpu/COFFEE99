@@ -121,23 +121,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     console.log('Attempting to place order with data:', orderData);
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData])
-      .select();
-
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select();
+      
+      if (error) throw error;
+      return data[0] as Order;
+    } catch (error: any) {
       console.error('Detailed Supabase Error:', error);
-      throw new Error(`Order Failed: ${error.message} (Code: ${error.code})`);
+      throw new Error(`Order Failed: ${error.message}`);
     }
-
-    if (!data || data.length === 0) {
-      console.warn('Order saved but could not be retrieved immediately (likely RLS). Proceeding with local data.');
-      // Return a mock order object with a temporary ID so the UI doesn't crash
-      return { ...orderData, id: `TEMP-${Date.now()}` } as Order;
-    }
-
-    return data[0] as Order;
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);

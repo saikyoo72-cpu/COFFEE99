@@ -22,8 +22,13 @@ export default function Profile() {
   const fetchUserData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('listings').select('*').eq('user_id', user?.id);
-      if (data) setListings(data);
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      setListings(data || []);
     } catch (error) {
       console.error('Error fetching profile data:', error);
     } finally {
@@ -36,18 +41,24 @@ export default function Profile() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.from('listings').insert([
-        {
-          user_id: user.id,
-          title: newListing.title,
-          description: newListing.description,
-          price: parseFloat(newListing.price),
-          image_url: newListing.image_url || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600'
-        }
-      ]).select();
+      const listingData = {
+        user_id: user.id,
+        title: newListing.title,
+        description: newListing.description,
+        price: parseFloat(newListing.price),
+        image_url: newListing.image_url || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600'
+      };
 
+      const { data, error } = await supabase
+        .from('listings')
+        .insert([listingData])
+        .select();
+      
       if (error) throw error;
-      if (data) setListings([data[0], ...listings]);
+      
+      if (data) {
+        setListings([data[0] as Listing, ...listings]);
+      }
       setShowListingModal(false);
       setNewListing({ title: '', description: '', price: '', image_url: '' });
     } catch (error) {
@@ -58,7 +69,11 @@ export default function Profile() {
 
   const handleDeleteListing = async (id: string) => {
     try {
-      const { error } = await supabase.from('listings').delete().eq('id', id);
+      const { error } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', id);
+      
       if (error) throw error;
       setListings(listings.filter(l => l.id !== id));
     } catch (error) {

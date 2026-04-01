@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '../components/Logo';
 import { ArrowLeft, Play, User, Clock, Eye, Search, Instagram, ExternalLink, PlayCircle, Plus, X as CloseIcon, CheckCircle2, Trash2, LogIn, LogOut } from 'lucide-react';
-import { auth, db, signInWithGoogle, logout } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, getDocFromServer } from 'firebase/firestore';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabase';
+import AuthModal from '../components/AuthModal';
 
-// Error Handling Spec for Firestore Operations
+// Error Handling Spec for Supabase Operations
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -17,45 +17,27 @@ enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
+interface SupabaseErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
   authInfo: {
     userId: string | undefined;
     email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
   }
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
+function handleSupabaseError(error: unknown, operationType: OperationType, path: string | null, user: any) {
+  const errInfo: SupabaseErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
+      userId: user?.id,
+      email: user?.email,
     },
     operationType,
     path
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  console.error('Supabase Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 
@@ -218,50 +200,46 @@ const parseVideoUrl = (url: string) => {
 };
 
 export default function Blogs() {
+  const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [dynamicVideos, setDynamicVideos] = useState<any[]>([]);
   const [dynamicShorts, setDynamicShorts] = useState<any[]>([]);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({ link: '', creator: '', title: '' });
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        console.log('Sign-in popup was closed by the user.');
-        return;
-      }
-      console.error('Sign-in error:', error);
-    }
+  const handleSignIn = () => {
+    setIsAuthModalOpen(true);
   };
 
   const handleDelete = async (videoId: string, type: 'short' | 'video') => {
     if (window.confirm('Are you sure you want to delete this video?')) {
       try {
-        await deleteDoc(doc(db, 'videos', videoId));
+        const { error } = await supabase
+          .from('videos')
+          .delete()
+          .eq('id', videoId);
+        
+        if (error) throw error;
+        
+        // Optimistic update
+        if (type === 'short') {
+          setDynamicShorts(prev => prev.filter(v => v.id !== videoId));
+        } else {
+          setDynamicVideos(prev => prev.filter(v => v.id !== videoId));
+        }
       } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `videos/${videoId}`);
+        handleSupabaseError(error, OperationType.DELETE, `videos/${videoId}`, user);
       }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) {
+    if (!user) {
       handleSignIn();
       return;
     }
@@ -270,18 +248,22 @@ export default function Blogs() {
     
     const videoData = {
       title: formData.title || "New Submission",
-      creator: formData.creator || currentUser.displayName || "Coffee Creator",
-      creatorAvatar: currentUser.photoURL || `https://picsum.photos/seed/${formData.creator}/100/100`,
+      creator: formData.creator || user.user_metadata?.full_name || user.email?.split('@')[0] || "Coffee Creator",
+      creatorAvatar: user.user_metadata?.avatar_url || `https://picsum.photos/seed/${formData.creator}/100/100`,
       embedUrl,
       type: videoType,
       views: "0 views",
-      postedAt: serverTimestamp(),
-      authorUid: currentUser.uid
+      postedAt: new Date().toISOString(),
+      authorUid: user.id
     };
 
     try {
       setIsUploading(true);
-      await addDoc(collection(db, 'videos'), videoData);
+      const { error } = await supabase
+        .from('videos')
+        .insert([videoData]);
+      
+      if (error) throw error;
       
       setIsUploading(false);
       setIsSubmitted(true);
@@ -294,42 +276,45 @@ export default function Blogs() {
     } catch (error) {
       setIsUploading(false);
       setIsSubmitted(false);
-      handleFirestoreError(error, OperationType.CREATE, 'videos');
+      handleSupabaseError(error, OperationType.CREATE, 'videos', user);
     }
   };
 
   useEffect(() => {
-    if (!isAuthReady) return;
-
-    // Test connection
-    const testConnection = async () => {
+    const fetchVideos = async () => {
       try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (error) {
-        if(error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration. ");
+        const { data, error } = await supabase
+          .from('videos')
+          .select('*')
+          .order('postedAt', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (data) {
+          setDynamicVideos(data.filter((v: any) => v.type !== 'short'));
+          setDynamicShorts(data.filter((v: any) => v.type === 'short'));
         }
+        setIsLoading(false);
+      } catch (error) {
+        handleSupabaseError(error, OperationType.LIST, 'videos', user);
+        setIsLoading(false);
       }
-    }
-    testConnection();
+    };
 
-    const q = query(collection(db, 'videos'), orderBy('postedAt', 'desc'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedVideos = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    fetchVideos();
 
-      setDynamicVideos(fetchedVideos.filter((v: any) => v.type !== 'short'));
-      setDynamicShorts(fetchedVideos.filter((v: any) => v.type === 'short'));
-      setIsLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'videos');
-    });
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('videos-changes')
+      .on('postgres_changes', { event: '*', table: 'videos' }, () => {
+        fetchVideos();
+      })
+      .subscribe();
 
-    return () => unsubscribe();
-  }, [isAuthReady]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const filteredVideos = dynamicVideos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -338,8 +323,14 @@ export default function Blogs() {
 
   const formatDate = (date: any) => {
     if (!date) return '';
-    if (typeof date === 'string') return date;
-    // Handle Firestore Timestamp
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+    // Handle Firestore Timestamp (for backward compatibility if any data remains)
     if (date && typeof date === 'object' && 'seconds' in date) {
       return new Date(date.seconds * 1000).toLocaleDateString([], { 
         year: 'numeric', 
@@ -379,9 +370,9 @@ export default function Blogs() {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {currentUser ? (
+            {user ? (
               <button 
-                onClick={() => logout()}
+                onClick={() => signOut()}
                 className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-medium transition-all duration-300 border border-white/5 group"
               >
                 <LogOut className="h-4 w-4" />
@@ -397,7 +388,13 @@ export default function Blogs() {
               </button>
             )}
             <button 
-              onClick={() => setIsSubmitModalOpen(true)}
+              onClick={() => {
+                if (!user) {
+                  handleSignIn();
+                } else {
+                  setIsSubmitModalOpen(true);
+                }
+              }}
               className="flex items-center gap-2 px-3 sm:px-5 py-2 bg-[#ff3c3c] hover:bg-[#ff5555] text-white rounded-full text-xs sm:text-sm font-bold transition-all shadow-lg shadow-[#ff3c3c]/20 active:scale-95 group"
             >
               <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
@@ -612,7 +609,7 @@ export default function Blogs() {
                     </div>
 
                     {/* Delete Button for Creator */}
-                    {currentUser?.uid === short.authorUid && (
+                    {user?.id === short.authorUid && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -677,7 +674,7 @@ export default function Blogs() {
                         <h3 className="font-bold text-base leading-snug mb-1 line-clamp-2 group-hover:text-[#ff3c3c] transition-colors">
                           {video.title}
                         </h3>
-                        {currentUser?.uid === video.authorUid && (
+                        {user?.id === video.authorUid && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -724,6 +721,10 @@ export default function Blogs() {
           animation: shimmer 2s infinite;
         }
       `}</style>
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </div>
   );
 }
