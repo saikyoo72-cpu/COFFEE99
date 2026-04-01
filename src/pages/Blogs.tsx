@@ -278,7 +278,7 @@ export default function Blogs() {
       creator: sanitizedCreator,
       description: sanitizedDescription,
       creator_avatar: user?.user_metadata?.avatar_url || `https://picsum.photos/seed/${sanitizedCreator}/100/100`,
-      embed_url: embedUrl,
+      video_url: embedUrl,
       type: videoType,
       views: "0 views",
       posted_at: new Date().toISOString(),
@@ -299,6 +299,9 @@ export default function Blogs() {
       setIsUploading(false);
       setIsSubmitted(true);
       
+      // Refresh video list immediately
+      fetchVideos();
+      
       setTimeout(() => {
         setIsSubmitted(false);
         setIsSubmitModalOpen(false);
@@ -313,61 +316,61 @@ export default function Blogs() {
     }
   };
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      console.log('[Blogs] Fetching videos from Supabase...');
-      try {
-        const { data, error } = await supabase
-          .from('videos')
-          .select('*')
-          .order('posted_at', { ascending: false });
-        
-        if (error) {
-          console.error('[Blogs] Supabase fetch error:', error.message);
-          handleSupabaseError(error, OperationType.LIST, 'videos', user);
-          // Only show static fallbacks if database fetch fails completely
-          setDynamicVideos(videos);
-          setDynamicShorts(shorts);
-          return;
-        }
-        
-        console.log('[Blogs] Fetch results from database:', data);
-
-        if (data && data.length > 0) {
-          console.log(`[Blogs] Successfully fetched ${data.length} videos from database. Disabling static fallbacks.`);
-          // Map snake_case from DB to camelCase for frontend
-          const mappedData = data.map((v: any) => ({
-            ...v,
-            creatorAvatar: v.creator_avatar,
-            embedUrl: v.embed_url,
-            postedAt: v.posted_at,
-            authorUid: v.author_uid
-          }));
-          const fetchedVideos = mappedData.filter((v: any) => v.type !== 'short');
-          const fetchedShorts = mappedData.filter((v: any) => v.type === 'short');
-          
-          // ONLY show fetched data, no static fallbacks mixed in
-          setDynamicVideos(fetchedVideos);
-          setDynamicShorts(fetchedShorts);
-        } else {
-          console.log('[Blogs] No videos found in database. Showing empty state or static fallbacks as placeholder.');
-          // If database is empty, we can choose to show nothing or fallbacks. 
-          // User said "REMOVE or disable static fallback system when database is working".
-          // If it's working but empty, we'll show empty arrays or static ones? 
-          // Let's show empty arrays to be strictly "no fallback".
-          setDynamicVideos([]);
-          setDynamicShorts([]);
-        }
-      } catch (error) {
-        console.error('[Blogs] Unexpected error during fetch:', error);
+  const fetchVideos = React.useCallback(async () => {
+    console.log('[Blogs] Fetching videos from Supabase...');
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('posted_at', { ascending: false });
+      
+      if (error) {
+        console.error('[Blogs] Supabase fetch error:', error.message);
         handleSupabaseError(error, OperationType.LIST, 'videos', user);
+        // Only show static fallbacks if database fetch fails completely
         setDynamicVideos(videos);
         setDynamicShorts(shorts);
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
+      
+      console.log('[Blogs] Fetch results from database:', data);
 
+      if (data && data.length > 0) {
+        console.log(`[Blogs] Successfully fetched ${data.length} videos from database. Disabling static fallbacks.`);
+        // Map snake_case from DB to camelCase for frontend
+        const mappedData = data.map((v: any) => ({
+          ...v,
+          creatorAvatar: v.creator_avatar,
+          embedUrl: v.video_url,
+          postedAt: v.posted_at,
+          authorUid: v.author_uid
+        }));
+        const fetchedVideos = mappedData.filter((v: any) => v.type !== 'short');
+        const fetchedShorts = mappedData.filter((v: any) => v.type === 'short');
+        
+        // ONLY show fetched data, no static fallbacks mixed in
+        setDynamicVideos(fetchedVideos);
+        setDynamicShorts(fetchedShorts);
+      } else {
+        console.log('[Blogs] No videos found in database. Showing empty state or static fallbacks as placeholder.');
+        // If database is empty, we can choose to show nothing or fallbacks. 
+        // User said "REMOVE or disable static fallback system when database is working".
+        // If it's working but empty, we'll show empty arrays or static ones? 
+        // Let's show empty arrays to be strictly "no fallback".
+        setDynamicVideos([]);
+        setDynamicShorts([]);
+      }
+    } catch (error) {
+      console.error('[Blogs] Unexpected error during fetch:', error);
+      handleSupabaseError(error, OperationType.LIST, 'videos', user);
+      setDynamicVideos(videos);
+      setDynamicShorts(shorts);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     fetchVideos();
 
     // Subscribe to real-time changes
@@ -381,7 +384,7 @@ export default function Blogs() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [fetchVideos]);
 
   const filteredVideos = dynamicVideos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
