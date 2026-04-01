@@ -95,7 +95,7 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       {/* 2. HERO SECTION */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-[65vh] md:h-screen flex items-center justify-center overflow-hidden">
         {/* Background Slider & Drag Area */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <AnimatePresence initial={false} custom={direction}>
@@ -201,17 +201,17 @@ export default function Home() {
       <PromotionalCarousel />
 
       {/* 6. CUSTOMER REVIEWS */}
-      <section id="reviews" className="py-24 bg-primary-brown overflow-hidden">
+      <section id="reviews" className="py-12 md:py-16 bg-primary-brown overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-8 md:mb-12"
           >
-            <span className="text-white/60 font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Testimonials</span>
-            <h2 className="text-4xl md:text-5xl font-serif text-white">What Our <span className="italic text-black">Customers Say</span></h2>
+            <span className="text-white/60 font-bold text-sm uppercase tracking-[0.3em] mb-2 block">Testimonials</span>
+            <h2 className="text-3xl md:text-5xl font-serif text-white">What Our <span className="italic text-black">Customers Say</span></h2>
           </motion.div>
 
           <div className="relative max-w-4xl mx-auto">
@@ -225,22 +225,22 @@ export default function Home() {
                   transition={{ duration: 0.6, ease: "circOut" }}
                   className="text-center"
                 >
-                  <div className="flex justify-center gap-1 mb-6">
+                  <div className="flex justify-center gap-1 mb-4">
                     {[...Array(currentReview?.rating || 5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-white text-white" />
+                      <Star key={i} className="h-4 w-4 fill-white text-white" />
                     ))}
                   </div>
-                  <p className="text-2xl md:text-4xl font-serif italic text-white mb-8 leading-relaxed">
+                  <p className="text-xl md:text-3xl font-serif italic text-white mb-6 leading-relaxed px-4">
                     "{currentReview?.text}"
                   </p>
-                  <h4 className="text-lg font-bold text-black uppercase tracking-widest">
+                  <h4 className="text-sm md:text-lg font-bold text-black uppercase tracking-widest">
                     {currentReview?.name}
                   </h4>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            <div className="flex justify-center gap-4 mt-12">
+            <div className="flex justify-center gap-4 mt-8">
               <button 
                 onClick={() => setCurrentTestimonial((prev) => (prev - 1 + reviews.length) % reviews.length)}
                 className="p-3 rounded-full border-2 border-white text-white hover:bg-white hover:text-primary-brown transition-all"
@@ -330,17 +330,17 @@ export default function Home() {
       </section>
 
       {/* 9. LOCATIONS SECTION (Integrated into Home) */}
-      <section id="locations" className="py-24 bg-cream-bg">
+      <section id="locations" className="py-12 md:py-24 bg-cream-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "backOut" }}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <span className="text-caramel font-bold text-sm uppercase tracking-[0.3em] mb-4 block">Visit Us</span>
-            <h2 className="text-4xl md:text-5xl font-serif text-dark-roast">Our <span className="italic">5 Branches</span></h2>
+            <span className="text-caramel font-bold text-sm uppercase tracking-[0.3em] mb-2 block">Visit Us</span>
+            <h2 className="text-3xl md:text-5xl font-serif text-dark-roast">Our <span className="italic">5 Branches</span></h2>
           </motion.div>
 
           <motion.div 

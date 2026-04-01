@@ -84,7 +84,7 @@ export default function PromotionalCarousel() {
 
   return (
     <div 
-      className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 my-12"
+      className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 my-8 md:my-12"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

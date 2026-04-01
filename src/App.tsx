@@ -65,6 +65,19 @@ function AppContent() {
 }
 
 export default function App() {
+  React.useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await fetch(`/api/health`);
+        const data = await res.json();
+        console.log('[App] API Health Check:', data);
+      } catch (err) {
+        console.error('[App] API Health Check Failed:', err);
+      }
+    };
+    checkHealth();
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>

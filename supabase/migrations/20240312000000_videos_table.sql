@@ -3,12 +3,13 @@ CREATE TABLE IF NOT EXISTS videos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   creator TEXT NOT NULL,
+  description TEXT,
   creator_avatar TEXT,
   embed_url TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('youtube', 'instagram', 'facebook', 'short', 'other')),
   views TEXT,
   posted_at TIMESTAMPTZ DEFAULT NOW(),
-  author_uid UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  author_uid UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -20,9 +21,9 @@ ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Anyone can read videos" ON videos
   FOR SELECT USING (true);
 
--- Authenticated users can create videos
-CREATE POLICY "Authenticated users can create videos" ON videos
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Anyone can create videos (Public submission)
+CREATE POLICY "Anyone can create videos" ON videos
+  FOR INSERT WITH CHECK (true);
 
 -- Users can update their own videos
 CREATE POLICY "Users can update their own videos" ON videos

@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
 import path from 'path';
 import { fileURLToPath } from "url";
+import cors from "cors";
+
+console.log("[Server] Starting server script...");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,15 +18,22 @@ dotenv.config();
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("[Server] Supabase credentials missing in environment variables.");
+let supabase: any;
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("[Server] Supabase client initialized");
+  } else {
+    console.warn("[Server] Supabase credentials missing, some features will be disabled");
+  }
+} catch (err) {
+  console.error("[Server] Failed to initialize Supabase client:", err);
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const app = express();
 const PORT = 3000;
 
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser("coffee99-secret-key"));
 
@@ -41,9 +51,11 @@ const verifyAdmin = (req: any, res: any, next: any) => {
 
 // API health check
 app.get("/api/health", (req, res) => {
+  console.log("[API] Health check requested");
   res.json({ 
     status: "ok", 
-    supabase: true
+    supabase: !!supabaseUrl && !!supabaseServiceKey,
+    time: new Date().toISOString()
   });
 });
 

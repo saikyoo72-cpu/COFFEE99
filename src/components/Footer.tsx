@@ -10,7 +10,7 @@ export default function Footer() {
   useEffect(() => {
     const fetchSettings = async (retries = 5) => {
       try {
-        // Use relative URL to avoid potential issues in some environments
+        // Use relative URL for better robustness in different environments
         const url = `/api/settings/shivmandir`;
         console.log(`[Footer] Fetching settings from: ${url} (Retries left: ${retries})`);
         const res = await fetch(url, {

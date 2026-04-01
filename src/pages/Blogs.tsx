@@ -28,8 +28,17 @@ interface SupabaseErrorInfo {
 }
 
 function handleSupabaseError(error: unknown, operationType: OperationType, path: string | null, user: any) {
+  let errorMessage = 'Unknown error';
+  
+  if (error && typeof error === 'object') {
+    const err = error as any;
+    errorMessage = err.message || err.details || err.hint || (typeof err.error === 'string' ? err.error : JSON.stringify(err));
+  } else {
+    errorMessage = String(error);
+  }
+
   const errInfo: SupabaseErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: user?.id,
       email: user?.email,
@@ -37,8 +46,8 @@ function handleSupabaseError(error: unknown, operationType: OperationType, path:
     operationType,
     path
   }
-  console.error('Supabase Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Supabase Operation Info: ', JSON.stringify(errInfo));
+  return errInfo;
 }
 
 const videos = [
@@ -109,36 +118,48 @@ const shorts = [
     id: 1,
     caption: "Morning rush at Coffee99 ☕",
     thumbnail: "https://picsum.photos/seed/short1/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "12K"
   },
   {
     id: 2,
     caption: "That perfect pour... 😍",
     thumbnail: "https://picsum.photos/seed/short2/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "8.5K"
   },
   {
     id: 3,
     caption: "Weekend vibes are here!",
     thumbnail: "https://picsum.photos/seed/short3/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "15K"
   },
   {
     id: 4,
     caption: "Secret menu item? 👀",
     thumbnail: "https://picsum.photos/seed/short4/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "22K"
   },
   {
     id: 5,
     caption: "Coffee art level: Pro",
     thumbnail: "https://picsum.photos/seed/short5/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "9.1K"
   },
   {
     id: 6,
     caption: "POV: You found the best spot",
     thumbnail: "https://picsum.photos/seed/short6/400/711",
+    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    type: "short",
     views: "11K"
   }
 ];
@@ -203,13 +224,13 @@ export default function Blogs() {
   const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dynamicVideos, setDynamicVideos] = useState<any[]>([]);
-  const [dynamicShorts, setDynamicShorts] = useState<any[]>([]);
+  const [dynamicVideos, setDynamicVideos] = useState<any[]>(videos);
+  const [dynamicShorts, setDynamicShorts] = useState<any[]>(shorts);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [formData, setFormData] = useState({ link: '', creator: '', title: '' });
+  const [formData, setFormData] = useState({ link: '', creator: '', title: '', description: '' });
 
   const handleSignIn = () => {
     setIsAuthModalOpen(true);
@@ -239,64 +260,110 @@ export default function Blogs() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      handleSignIn();
+    
+    // Validate URL
+    const { embedUrl, type: videoType } = parseVideoUrl(formData.link);
+    if (!embedUrl || videoType === 'unknown') {
+      alert('Please enter a valid video URL (YouTube, Instagram, or Facebook)');
       return;
     }
-    
-    const { embedUrl, type: videoType } = parseVideoUrl(formData.link);
+
+    // Sanitize inputs (basic)
+    const sanitizedTitle = formData.title.trim().substring(0, 100);
+    const sanitizedCreator = formData.creator.trim().substring(0, 50) || "Anonymous Creator";
+    const sanitizedDescription = formData.description?.trim().substring(0, 500) || "";
     
     const videoData = {
-      title: formData.title || "New Submission",
-      creator: formData.creator || user.user_metadata?.full_name || user.email?.split('@')[0] || "Coffee Creator",
-      creatorAvatar: user.user_metadata?.avatar_url || `https://picsum.photos/seed/${formData.creator}/100/100`,
-      embedUrl,
+      title: sanitizedTitle,
+      creator: sanitizedCreator,
+      description: sanitizedDescription,
+      creator_avatar: user?.user_metadata?.avatar_url || `https://picsum.photos/seed/${sanitizedCreator}/100/100`,
+      embed_url: embedUrl,
       type: videoType,
       views: "0 views",
-      postedAt: new Date().toISOString(),
-      authorUid: user.id
+      posted_at: new Date().toISOString(),
+      author_uid: user?.id || null
     };
 
     try {
       setIsUploading(true);
-      const { error } = await supabase
+      console.log('[Blogs] Submitting video data:', videoData);
+      const { data, error } = await supabase
         .from('videos')
-        .insert([videoData]);
+        .insert([videoData])
+        .select();
       
       if (error) throw error;
       
+      console.log('[Blogs] Video submitted successfully. Insert result:', data);
       setIsUploading(false);
       setIsSubmitted(true);
       
       setTimeout(() => {
         setIsSubmitted(false);
         setIsSubmitModalOpen(false);
-        setFormData({ link: '', creator: '', title: '' });
+        setFormData({ link: '', creator: '', title: '', description: '' });
       }, 2500);
     } catch (error) {
+      console.error('[Blogs] Submission error:', error);
       setIsUploading(false);
       setIsSubmitted(false);
       handleSupabaseError(error, OperationType.CREATE, 'videos', user);
+      alert('Failed to submit video. Please try again later.');
     }
   };
 
   useEffect(() => {
     const fetchVideos = async () => {
+      console.log('[Blogs] Fetching videos from Supabase...');
       try {
         const { data, error } = await supabase
           .from('videos')
           .select('*')
-          .order('postedAt', { ascending: false });
+          .order('posted_at', { ascending: false });
         
-        if (error) throw error;
-        
-        if (data) {
-          setDynamicVideos(data.filter((v: any) => v.type !== 'short'));
-          setDynamicShorts(data.filter((v: any) => v.type === 'short'));
+        if (error) {
+          console.error('[Blogs] Supabase fetch error:', error.message);
+          handleSupabaseError(error, OperationType.LIST, 'videos', user);
+          // Only show static fallbacks if database fetch fails completely
+          setDynamicVideos(videos);
+          setDynamicShorts(shorts);
+          return;
         }
-        setIsLoading(false);
+        
+        console.log('[Blogs] Fetch results from database:', data);
+
+        if (data && data.length > 0) {
+          console.log(`[Blogs] Successfully fetched ${data.length} videos from database. Disabling static fallbacks.`);
+          // Map snake_case from DB to camelCase for frontend
+          const mappedData = data.map((v: any) => ({
+            ...v,
+            creatorAvatar: v.creator_avatar,
+            embedUrl: v.embed_url,
+            postedAt: v.posted_at,
+            authorUid: v.author_uid
+          }));
+          const fetchedVideos = mappedData.filter((v: any) => v.type !== 'short');
+          const fetchedShorts = mappedData.filter((v: any) => v.type === 'short');
+          
+          // ONLY show fetched data, no static fallbacks mixed in
+          setDynamicVideos(fetchedVideos);
+          setDynamicShorts(fetchedShorts);
+        } else {
+          console.log('[Blogs] No videos found in database. Showing empty state or static fallbacks as placeholder.');
+          // If database is empty, we can choose to show nothing or fallbacks. 
+          // User said "REMOVE or disable static fallback system when database is working".
+          // If it's working but empty, we'll show empty arrays or static ones? 
+          // Let's show empty arrays to be strictly "no fallback".
+          setDynamicVideos([]);
+          setDynamicShorts([]);
+        }
       } catch (error) {
+        console.error('[Blogs] Unexpected error during fetch:', error);
         handleSupabaseError(error, OperationType.LIST, 'videos', user);
+        setDynamicVideos(videos);
+        setDynamicShorts(shorts);
+      } finally {
         setIsLoading(false);
       }
     };
@@ -306,7 +373,7 @@ export default function Blogs() {
     // Subscribe to real-time changes
     const channel = supabase
       .channel('videos-changes')
-      .on('postgres_changes', { event: '*', table: 'videos' }, () => {
+      .on('postgres_changes' as any, { event: '*', table: 'videos' }, () => {
         fetchVideos();
       })
       .subscribe();
@@ -389,11 +456,7 @@ export default function Blogs() {
             )}
             <button 
               onClick={() => {
-                if (!user) {
-                  handleSignIn();
-                } else {
-                  setIsSubmitModalOpen(true);
-                }
+                setIsSubmitModalOpen(true);
               }}
               className="flex items-center gap-2 px-3 sm:px-5 py-2 bg-[#ff3c3c] hover:bg-[#ff5555] text-white rounded-full text-xs sm:text-sm font-bold transition-all shadow-lg shadow-[#ff3c3c]/20 active:scale-95 group"
             >
@@ -463,9 +526,8 @@ export default function Blogs() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 ml-1">Creator Name</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 ml-1">Creator Name (Optional)</label>
                       <input 
-                        required
                         type="text"
                         placeholder="Your name or handle"
                         value={formData.creator}
@@ -482,6 +544,16 @@ export default function Blogs() {
                         value={formData.title}
                         onChange={(e) => setFormData({...formData, title: e.target.value})}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-sm focus:outline-none focus:border-[#ff3c3c]/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2 ml-1">Description (Optional)</label>
+                      <textarea 
+                        placeholder="Tell us more about this video..."
+                        value={formData.description}
+                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        rows={3}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-sm focus:outline-none focus:border-[#ff3c3c]/50 transition-all resize-none"
                       />
                     </div>
 

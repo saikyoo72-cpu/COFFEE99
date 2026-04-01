@@ -26,13 +26,14 @@ service cloud.firestore {
     }
 
     function isValidVideo(data) {
-      return data.keys().hasAll(['title', 'creator', 'embedUrl', 'type', 'authorUid']) &&
-             data.keys().hasOnly(['title', 'creator', 'creatorAvatar', 'embedUrl', 'type', 'views', 'postedAt', 'authorUid']) &&
+      return data.keys().hasAll(['title', 'creator', 'embedUrl', 'type']) &&
+             data.keys().hasOnly(['title', 'creator', 'description', 'creatorAvatar', 'embedUrl', 'type', 'views', 'postedAt', 'authorUid']) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.creator is string && data.creator.size() > 0 && data.creator.size() < 100 &&
+             (!('description' in data) || (data.description is string && data.description.size() < 1000)) &&
              data.embedUrl is string && data.embedUrl.size() > 0 && data.embedUrl.size() < 2000 &&
              data.type in ['youtube', 'instagram', 'facebook', 'short', 'other'] &&
-             data.authorUid == request.auth.uid &&
+             (!('authorUid' in data) || (data.authorUid is string || data.authorUid == null)) &&
              (!('creatorAvatar' in data) || (data.creatorAvatar is string && data.creatorAvatar.size() < 1000)) &&
              (!('views' in data) || (data.views is string && data.views.size() < 50)) &&
              (!('postedAt' in data) || (data.postedAt is timestamp || data.postedAt == null));
@@ -41,7 +42,7 @@ service cloud.firestore {
     match /videos/{videoId} {
       allow read: if true; // Anyone can view videos
       
-      allow create: if isAuthenticated() && isValidVideo(request.resource.data);
+      allow create: if isValidVideo(request.resource.data);
       
       allow update: if isAuthenticated() && 
                       isOwner(resource.data.authorUid) && 
