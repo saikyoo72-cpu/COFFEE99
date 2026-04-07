@@ -14,9 +14,20 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught Exception:', err);
+});
+
 // Initialize Supabase Client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+console.log(`[Server] Supabase URL configured: ${!!supabaseUrl}`);
+console.log(`[Server] Supabase Service Key configured: ${!!supabaseServiceKey}`);
 
 let supabase: any;
 try {
@@ -33,9 +44,22 @@ try {
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Cache-Control"]
+}));
 app.use(express.json());
 app.use(cookieParser("coffee99-secret-key"));
+
+// Request Logger
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/@vite') && !req.url.startsWith('/src') && !req.url.startsWith('/node_modules')) {
+    console.log(`[Server] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+  }
+  next();
+});
 
 // Middleware to verify admin session
 const verifyAdmin = (req: any, res: any, next: any) => {
@@ -118,6 +142,11 @@ app.get("/api/settings/:branchId", async (req, res) => {
   };
 
   try {
+    if (!supabase) {
+      console.warn(`[API] Supabase not initialized, using fallback for ${branchId}`);
+      return res.json(fallbackSettings);
+    }
+
     const { data: settings, error } = await supabase
       .from("admin_settings")
       .select("*")

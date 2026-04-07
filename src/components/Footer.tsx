@@ -10,13 +10,12 @@ export default function Footer() {
   useEffect(() => {
     const fetchSettings = async (retries = 5) => {
       try {
-        // Use relative URL for better robustness in different environments
-        const url = `/api/settings/shivmandir`;
+        // Use absolute path from origin for better robustness
+        const url = `${window.location.origin}/api/settings/shivmandir`;
         console.log(`[Footer] Fetching settings from: ${url} (Retries left: ${retries})`);
         const res = await fetch(url, {
           headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Accept': 'application/json'
           }
         });
         if (!res.ok) {
@@ -74,6 +73,7 @@ export default function Footer() {
           <div className="space-y-6">
             <h4 className="text-xl font-serif font-bold text-primary-brown">Quick Links</h4>
             <ul className="space-y-4">
+              <li><Link to="/blogs" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Our Blogs</Link></li>
               <li><Link to="/#locations" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Locations</Link></li>
             </ul>
           </div>

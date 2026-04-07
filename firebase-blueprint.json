@@ -1,22 +1,5 @@
 {
   "entities": {
-    "videos": {
-      "title": "Video",
-      "description": "A video or short submitted by a creator",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string", "description": "The title of the video" },
-        "creator": { "type": "string", "description": "The name of the creator" },
-        "description": { "type": "string", "description": "A short description of the video" },
-        "creatorAvatar": { "type": "string", "description": "URL to the creator's avatar" },
-        "embedUrl": { "type": "string", "description": "The embed URL for the video" },
-        "type": { "type": "string", "description": "The platform type (youtube, instagram, facebook, short)" },
-        "views": { "type": "string", "description": "Display string for views" },
-        "postedAt": { "type": "string", "format": "date-time", "description": "When the video was posted" },
-        "authorUid": { "type": "string", "description": "The Firebase Auth UID of the creator (optional for anonymous submissions)" }
-      },
-      "required": ["title", "creator", "embedUrl", "type"]
-    },
     "listings": {
       "title": "Listing",
       "description": "A custom coffee blend listing",
@@ -78,10 +61,6 @@
     }
   },
   "firestore": {
-    "/videos/{videoId}": {
-      "schema": "videos",
-      "description": "Collection of all submitted videos and shorts"
-    },
     "/listings/{listingId}": {
       "schema": "listings",
       "description": "Collection of custom coffee blends"

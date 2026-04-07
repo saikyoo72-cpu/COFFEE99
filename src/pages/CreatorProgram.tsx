@@ -153,12 +153,6 @@ export default function CreatorProgram() {
                 Apply Now
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </a>
-              <Link 
-                to="/blogs"
-                className="px-8 py-3.5 bg-white/5 text-white rounded-full font-bold text-base hover:bg-white/10 transition-all border border-white/10"
-              >
-                View Creator Hub
-              </Link>
             </div>
           </motion.div>
         </section>
