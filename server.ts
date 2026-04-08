@@ -354,6 +354,73 @@ app.post("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res)
   }
 });
 
+// Delete a video
+app.delete("/api/admin/videos/:branchId/:videoId", verifyAdmin, async (req, res) => {
+  const { videoId } = req.params;
+  console.log(`[Server] Attempting to delete video: ${videoId}`);
+
+  if (!supabase) {
+    console.error("[Server] Supabase client not initialized");
+    return res.status(500).json({ error: "Supabase client not initialized" });
+  }
+
+  try {
+    // 1. Get video details to find storage path
+    const { data: video, error: fetchError } = await supabase
+      .from("videos")
+      .select("embed_url")
+      .eq("id", videoId)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error("[Server] Fetch video error:", JSON.stringify(fetchError));
+      throw fetchError;
+    }
+
+    if (!video) {
+      console.warn(`[Server] Video not found: ${videoId}`);
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    // 2. Delete from Storage if it's a Supabase URL
+    if (video.embed_url && video.embed_url.includes('/storage/v1/object/public/video/')) {
+      // Extract filename correctly even if there are query params
+      const urlPath = video.embed_url.split('?')[0];
+      const fileName = urlPath.split('/').pop();
+      
+      if (fileName) {
+        console.log(`[Server] Deleting file from storage: ${fileName}`);
+        const { error: storageError } = await supabase.storage
+          .from("video")
+          .remove([fileName]);
+        
+        if (storageError) {
+          console.error("[Server] Storage deletion error:", JSON.stringify(storageError));
+          // Continue anyway to delete DB record
+        }
+      }
+    }
+
+    // 3. Delete from Database
+    console.log(`[Server] Deleting record from database: ${videoId}`);
+    const { error: dbError } = await supabase
+      .from("videos")
+      .delete()
+      .eq("id", videoId);
+
+    if (dbError) {
+      console.error("[Server] Database deletion error:", JSON.stringify(dbError));
+      throw dbError;
+    }
+
+    console.log(`[Server] Successfully deleted video: ${videoId}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error("[Server] Video deletion critical error:", err.message || err);
+    res.status(500).json({ error: err.message || "Internal Server Error" });
+  }
+});
+
 // Start the server
 async function startServer() {
   console.log(`[Server] Setting up app in ${process.env.NODE_ENV || "development"} mode`);
