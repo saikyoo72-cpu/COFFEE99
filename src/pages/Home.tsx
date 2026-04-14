@@ -26,6 +26,12 @@ export default function Home() {
   const [direction, setDirection] = useState(0);
 
   useEffect(() => {
+    // Preload hero images for faster transitions
+    slides.forEach((slide) => {
+      const img = new Image();
+      img.src = slide.img;
+    });
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 10000);
@@ -95,7 +101,7 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       {/* 2. HERO SECTION */}
-      <section className="relative h-[65vh] md:h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-[90vh] md:h-[110vh] flex items-center justify-center overflow-hidden cursor-grab select-none">
         {/* Background Slider & Drag Area */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <AnimatePresence initial={false} custom={direction}>
@@ -115,20 +121,22 @@ export default function Home() {
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute inset-0 cursor-grab active:cursor-grabbing"
+              className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
             >
               <img 
                 src={slides[currentSlide].img} 
                 alt={slides[currentSlide].title} 
                 className="w-full h-full object-cover pointer-events-none"
                 referrerPolicy="no-referrer"
+                loading="eager"
+                fetchPriority="high"
               />
             </motion.div>
           </AnimatePresence>
           <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none"></div>
         </div>
 
-        <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
+        <div className={`relative z-20 text-center w-full pb-12 md:pb-20 flex flex-col items-center justify-center min-h-[90vh] md:min-h-[110vh] pointer-events-none ${currentSlide === 0 ? 'pt-56 md:pt-72' : 'pt-48 md:pt-60'}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
@@ -136,21 +144,30 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
+              className="max-w-5xl mx-auto px-4 w-full"
             >
-              <h1 className="text-5xl md:text-8xl font-serif text-white mb-6 leading-tight drop-shadow-2xl">
+              <h1 className="flex flex-col items-center font-serif text-white mb-12 tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                 {slides[currentSlide].title.split(' ').map((word, i) => (
                   <motion.span
                     key={i}
-                    initial={{ opacity: 0, y: 20, rotate: -2 }}
-                    animate={{ opacity: 1, y: 0, rotate: 0 }}
-                    transition={{ delay: i * 0.1, duration: 0.5, ease: "backOut" }}
-                    className={word === 'Passion' || word === 'Neighborhood' || word === 'Art' || word === 'Desserts' || word === 'OFF' || word === 'Free' || word === 'Discount' || word === '₹99' || word === 'Cookie' || word === 'Aroma' || word === 'Retreat' || word === 'Care' ? 'italic text-primary-brown inline-block' : 'inline-block'}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      delay: i * 0.15, 
+                      duration: 0.8, 
+                      ease: [0.16, 1, 0.3, 1] 
+                    }}
+                    className={`${
+                      i === 0 
+                        ? 'text-5xl md:text-8xl font-bold mb-2 md:mb-4' 
+                        : 'text-4xl md:text-7xl italic text-primary-brown font-medium'
+                    }`}
                   >
-                    {word}&nbsp;
+                    {word}
                   </motion.span>
                 ))}
               </h1>
-              <p className="text-lg md:text-xl text-gray-300 mb-10 font-light tracking-wide max-w-2xl mx-auto drop-shadow-md">
+              <p className="text-lg md:text-xl text-gray-300 mb-14 font-light tracking-wide max-w-2xl mx-auto drop-shadow-md">
                 {slides[currentSlide].text.split(' ').map((word, i) => (
                   <motion.span
                     key={i}
@@ -163,7 +180,7 @@ export default function Home() {
                   </motion.span>
                 ))}
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-10 mb-20 pointer-events-auto">
                 <a 
                   href="#locations" 
                   className="w-full sm:w-auto px-10 py-4 bg-primary-brown text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-2xl shadow-primary-brown/40"
@@ -177,31 +194,31 @@ export default function Home() {
                   Reviews
                 </a>
               </div>
+
+              {/* Navigation Dots - Centered and aligned below the button */}
+              <div className="flex justify-center gap-4 pointer-events-auto">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                      index === currentSlide 
+                        ? 'bg-primary-brown w-10' 
+                        : 'bg-white/30 hover:bg-white/60'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
             </motion.div>
           </AnimatePresence>
-        </div>
-
-        {/* Navigation Dots */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                index === currentSlide 
-                  ? 'bg-primary-brown w-8' 
-                  : 'bg-white/30 hover:bg-white/60'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
         </div>
       </section>
 
       <PromotionalCarousel />
 
       {/* 6. CUSTOMER REVIEWS */}
-      <section id="reviews" className="py-12 md:py-16 bg-primary-brown overflow-hidden">
+      <section id="reviews" className="py-8 md:py-10 bg-primary-brown overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -474,7 +491,7 @@ export default function Home() {
       </section>
 
       {/* 5. WHY CHOOSE US (Moved to last) */}
-      <section className="py-24 bg-black">
+      <section className="py-12 md:py-16 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, rotateX: -45 }}

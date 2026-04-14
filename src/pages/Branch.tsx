@@ -49,11 +49,11 @@ export default function Branch() {
             transition={{ duration: 0.8 }}
           >
             <div className="flex justify-between items-center mb-8">
-              <Link to="/" className="inline-flex items-center text-primary-brown hover:text-white font-bold transition-all bg-black/90 backdrop-blur-md px-6 py-3 rounded-full shadow-xl shadow-black/10 group">
-                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" /> Back to Home
+              <Link to="/" className="inline-flex items-center text-primary-brown hover:text-white font-bold transition-all bg-black/90 backdrop-blur-md px-4 py-2 rounded-full shadow-xl shadow-black/10 group text-xs uppercase tracking-widest">
+                <ArrowLeft className="mr-2 h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to Home
               </Link>
-              <Link to={`/admin/${branch.id}/login`} className="inline-flex items-center text-white hover:text-primary-brown font-bold transition-all bg-black/90 backdrop-blur-md px-6 py-3 rounded-full shadow-xl shadow-black/10 group">
-                Admin Panel <Coffee className="ml-2 h-4 w-4" />
+              <Link to={`/admin/${branch.id}/login`} className="inline-flex items-center text-white hover:text-primary-brown font-bold transition-all bg-black/90 backdrop-blur-md px-4 py-2 rounded-full shadow-xl shadow-black/10 group text-xs uppercase tracking-widest">
+                Admin Panel <Coffee className="ml-2 h-3.5 w-3.5" />
               </Link>
             </div>
             <h1 className="text-4xl md:text-7xl font-serif text-white mb-6 drop-shadow-2xl">{branch.name}</h1>

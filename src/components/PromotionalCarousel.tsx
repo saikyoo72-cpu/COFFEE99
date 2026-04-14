@@ -6,26 +6,26 @@ import { Link } from 'react-router-dom';
 const slides = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=1920',
-    title: 'Limited Time Offer',
-    subtitle: 'Get 20% off on all cold brews!',
-    buttonText: 'Order Now',
+    image: 'https://i.ibb.co/dxdtzhL/926df87b-7b63-4e3f-ba55-42ebd7dc4319.jpg',
+    title: '',
+    subtitle: '',
+    buttonText: 'Grab this offer',
     link: '/menu'
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&q=80&w=1920',
-    title: 'New Arrival',
-    subtitle: 'Try our new Delhi Imported Chicken Sandwich.',
-    buttonText: 'View Menu',
+    image: 'https://i.ibb.co/MDjfV9Wf/6eb23f39-e9de-4a5d-bad4-299641f22cfb.jpg',
+    title: '',
+    subtitle: '',
+    buttonText: 'Grab this offer',
     link: '/menu'
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1920',
-    title: 'Coffee99 Rewards',
-    subtitle: 'Join our creator program and earn rewards.',
-    buttonText: 'Join Now',
+    image: 'https://i.ibb.co/bg7NZx3Y/abf9d5cb-dc39-4f57-b86c-75a43ef3eec0.jpg',
+    title: '',
+    subtitle: '',
+    buttonText: 'Grab this offer',
     link: '/creator-program'
   }
 ];
@@ -84,11 +84,11 @@ export default function PromotionalCarousel() {
 
   return (
     <div 
-      className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 my-8 md:my-12"
+      className="relative w-full my-0"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative h-[160px] md:h-[200px] overflow-hidden rounded-3xl shadow-xl shadow-black/20 border border-white/10 bg-latte-beige">
+      <div className="relative h-[140px] md:h-[200px] overflow-hidden shadow-xl shadow-black/20 bg-latte-beige">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={currentIndex}
@@ -109,50 +109,59 @@ export default function PromotionalCarousel() {
             className="absolute inset-0 cursor-grab active:cursor-grabbing"
           >
             <div 
-              className="absolute inset-0 bg-cover bg-center opacity-60"
+              className="absolute inset-0 bg-center opacity-90 bg-cover"
               style={{ backgroundImage: `url(${slides[currentIndex].image})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+              {slides[currentIndex].title && (
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+              )}
             </div>
             
-            <div className="relative h-full flex items-center px-8 md:px-16">
-              <div className="max-w-xl">
+            {slides[currentIndex].buttonText && (
+              <div className="absolute bottom-4 left-8">
                 <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] font-bold uppercase tracking-widest rounded-full hover:bg-white/20 transition-all shadow-lg cursor-pointer"
                 >
-                  <span className="inline-block px-3 py-1 bg-primary-brown/20 text-primary-brown text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-3 border border-primary-brown/30">
-                    Featured Offer
-                  </span>
-                  <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-1 leading-tight">
-                    {slides[currentIndex].title}
-                  </h2>
-                  <p className="text-xs md:text-sm text-gray-400 mb-4 font-light max-w-sm">
-                    {slides[currentIndex].subtitle}
-                  </p>
-                  {slides[currentIndex].buttonText && (
-                    <Link
-                      to={slides[currentIndex].link}
-                      className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white hover:text-primary-brown transition-colors group"
-                    >
-                      {slides[currentIndex].buttonText}
-                      <motion.span
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5 }}
-                      >
-                        →
-                      </motion.span>
-                    </Link>
-                  )}
+                  {slides[currentIndex].buttonText}
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    →
+                  </motion.span>
                 </motion.div>
               </div>
-            </div>
+            )}
+
+            {slides[currentIndex].title && (
+              <div className="relative h-full flex items-center px-8 md:px-16 pb-12">
+                <div className="max-w-xl">
+                  <motion.div
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <span className="inline-block px-3 py-1 bg-primary-brown/20 text-primary-brown text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-3 border border-primary-brown/30">
+                      Featured Offer
+                    </span>
+                    <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-1 leading-tight">
+                      {slides[currentIndex].title}
+                    </h2>
+                    <p className="text-xs md:text-sm text-gray-400 mb-4 font-light max-w-sm">
+                      {slides[currentIndex].subtitle}
+                    </p>
+                  </motion.div>
+                </div>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation Dots - Minimalist */}
-        <div className="absolute bottom-4 right-8 flex gap-1.5 z-10">
+        {/* Navigation Dots - Minimalist & Centered */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {slides.map((_, index) => (
             <button
               key={index}
@@ -161,7 +170,7 @@ export default function PromotionalCarousel() {
                 setCurrentIndex(index);
               }}
               className={`h-1 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'bg-primary-brown w-4' : 'bg-white/20 hover:bg-white/40'
+                index === currentIndex ? 'bg-primary-brown w-6' : 'bg-white/20 hover:bg-white/40'
               }`}
             />
           ))}

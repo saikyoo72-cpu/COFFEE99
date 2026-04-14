@@ -534,9 +534,21 @@ function FullVideoCard({
     }
   }, [embedUrl, isDirectVideo, thumbnail, isGenerating]);
 
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isUnmuted;
+    }
+  }, [isUnmuted]);
+
   const handlePlay = () => {
     if (videoRef.current) {
-      videoRef.current.play().catch(err => console.error("Playback failed:", err));
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn("Playback prevented:", err);
+          setIsPlaying(false);
+        });
+      }
       setIsPlaying(true);
     }
   };
@@ -559,7 +571,12 @@ function FullVideoCard({
       // Unmute on first interaction if not already unmuted
       if (!isUnmuted) onToggleMute();
     } else {
-      handlePause();
+      // If already playing (e.g. from hover), first click should unmute
+      if (!isUnmuted) {
+        onToggleMute();
+      } else {
+        handlePause();
+      }
     }
   };
 
@@ -577,13 +594,20 @@ function FullVideoCard({
         {isDirectVideo ? (
           <>
             <video 
+              key={embedUrl}
               ref={videoRef}
               src={embedUrl} 
               className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
               muted={!isUnmuted}
               playsInline
               loop
-              autoPlay
+              preload="auto"
+              crossOrigin="anonymous"
+              onCanPlay={() => {
+                if (isPlaying && videoRef.current) {
+                  videoRef.current.play().catch(() => {});
+                }
+              }}
             />
             
             {/* Mute Toggle Button */}

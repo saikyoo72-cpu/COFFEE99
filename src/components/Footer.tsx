@@ -10,12 +10,12 @@ export default function Footer() {
   useEffect(() => {
     const fetchSettings = async (retries = 5) => {
       try {
-        // Use absolute path from origin for better robustness
-        const url = `${window.location.origin}/api/settings/shivmandir`;
-        console.log(`[Footer] Fetching settings from: ${url} (Retries left: ${retries})`);
+        const url = '/api/settings/shivmandir';
+        console.log(`[Footer] Fetching settings (Retries left: ${retries})`);
         const res = await fetch(url, {
           headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
           }
         });
         if (!res.ok) {

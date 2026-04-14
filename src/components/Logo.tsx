@@ -21,9 +21,9 @@ export const Logo = ({ className = "h-10 w-auto", storeName }: { className?: str
 
     return (
       <div className={`${className} flex items-center`} style={{ color: 'inherit', filter: 'none', mixBlendMode: 'normal', opacity: 1 }}>
-        <span className="text-2xl font-black tracking-tighter flex items-center">
+        <span className="text-2xl font-black tracking-tight flex items-center">
           <span style={{ color: redColor, display: 'inline-block' }}>{firstPart}</span>
-          <span style={{ color: cyanColor, display: 'inline-block' }}>{secondPart}</span>
+          <span style={{ color: cyanColor, display: 'inline-block', marginLeft: '0.1em' }}>{secondPart}</span>
         </span>
       </div>
     );
@@ -40,9 +40,9 @@ export const Logo = ({ className = "h-10 w-auto", storeName }: { className?: str
     >
       {/* Logo Text with original brand colors */}
       <g fontWeight="900" fontFamily="'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif" fontSize="44">
-        <text x="5" y="46" letterSpacing="-2">
+        <text x="5" y="46" letterSpacing="0">
           <tspan fill={redColor} style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.1))' }}>Coffee</tspan>
-          <tspan fill={cyanColor}>99</tspan>
+          <tspan fill={cyanColor} dx="4">99</tspan>
         </text>
       </g>
     </svg>

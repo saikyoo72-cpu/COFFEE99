@@ -6,6 +6,8 @@ import { createClient } from "@supabase/supabase-js";
 import path from 'path';
 import { fileURLToPath } from "url";
 import cors from "cors";
+import admin from "firebase-admin";
+import fs from "fs";
 
 console.log("[Server] Starting server script...");
 
@@ -13,6 +15,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// Initialize Firebase Admin
+const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
+let firebaseDb: admin.firestore.Firestore | null = null;
+
+try {
+  if (fs.existsSync(firebaseConfigPath)) {
+    const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+    admin.initializeApp({
+      projectId: firebaseConfig.projectId,
+    });
+    firebaseDb = admin.firestore().databaseId === firebaseConfig.firestoreDatabaseId 
+      ? admin.firestore() 
+      : admin.firestore(firebaseConfig.firestoreDatabaseId);
+    console.log("[Server] Firebase Admin initialized");
+  }
+} catch (err) {
+  console.error("[Server] Failed to initialize Firebase Admin:", err);
+}
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
@@ -142,34 +163,64 @@ app.get("/api/settings/:branchId", async (req, res) => {
   };
 
   try {
-    if (!supabase) {
-      console.warn(`[API] Supabase not initialized, using fallback for ${branchId}`);
-      return res.json(fallbackSettings);
+    // 1. Try Firebase first as the primary source for this app
+    if (firebaseDb) {
+      try {
+        const doc = await firebaseDb.collection('admin_settings').doc(branchId).get();
+        if (doc.exists) {
+          const settings = doc.data();
+          console.log(`[API] Settings found in Firebase for ${branchId}`);
+          return res.json({
+            store_name: settings?.store_name || fallbackSettings.store_name,
+            store_email: settings?.store_email || fallbackSettings.store_email,
+            store_address: settings?.store_address || fallbackSettings.store_address,
+            db_connected: true,
+            source: 'firebase'
+          });
+        }
+      } catch (firebaseErr: any) {
+        console.warn(`[API] Firebase fetch failed for ${branchId}:`, firebaseErr.message);
+      }
     }
 
-    const { data: settings, error } = await supabase
-      .from("admin_settings")
-      .select("*")
-      .eq("branch_id", branchId)
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    if (!settings) {
-      console.log(`[API] No settings found for ${branchId}, using fallback`);
-      return res.json(fallbackSettings);
+    // 2. Try Supabase as secondary source (with a short timeout)
+    if (supabase && supabaseUrl && !supabaseUrl.includes('placeholder')) {
+      try {
+        const settingsPromise = supabase
+          .from("admin_settings")
+          .select("*")
+          .eq("branch_id", branchId)
+          .maybeSingle();
+
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Supabase timeout")), 2000)
+        );
+
+        const { data: settings, error }: any = await Promise.race([settingsPromise, timeoutPromise]);
+        
+        if (!error && settings) {
+          console.log(`[API] Settings found in Supabase for ${branchId}`);
+          return res.json({
+            store_name: settings.store_name || fallbackSettings.store_name,
+            store_email: settings.store_email || fallbackSettings.store_email,
+            store_address: settings.store_address || fallbackSettings.store_address,
+            db_connected: true,
+            source: 'supabase'
+          });
+        }
+      } catch (supabaseErr: any) {
+        // Log as info/debug rather than warning to avoid cluttering logs when fallback is working
+        console.log(`[API] Supabase fetch skipped or timed out for ${branchId}:`, supabaseErr.message);
+      }
     }
+
+    // 3. Final fallback
+    console.log(`[API] Using hardcoded fallback for ${branchId}`);
+    res.json({ ...fallbackSettings, db_connected: false, source: 'fallback' });
     
-    console.log(`[API] Settings found for ${branchId}:`, !!settings);
-    res.json({
-      store_name: settings.store_name || fallbackSettings.store_name,
-      store_email: settings.store_email || fallbackSettings.store_email,
-      store_address: settings.store_address || fallbackSettings.store_address,
-      db_connected: true
-    });
   } catch (err: any) {
-    console.error(`[API Error] Settings for ${branchId}:`, err.message);
-    res.json({ ...fallbackSettings, db_connected: false });
+    console.error(`[API Error] Settings for ${branchId}:`, err.message || err);
+    res.json({ ...fallbackSettings, db_connected: false, error: err.message });
   }
 });
 
@@ -453,10 +504,14 @@ async function startServer() {
   });
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Server] Running on http://localhost:${PORT}`);
+    console.log(`[Server] >>> SUCCESS <<< Server is listening on port ${PORT}`);
+    console.log(`[Server] Health check available at http://localhost:${PORT}/api/health`);
   });
 }
 
-startServer();
+console.log("[Server] Calling startServer()...");
+startServer().catch(err => {
+  console.error("[Server] FATAL ERROR during startServer():", err);
+});
 
 export default app;

@@ -5,14 +5,14 @@
 
 const slides = [
   { 
-    title: "Cozy Retreat", 
-    text: "Your favorite neighborhood spot for bold flavors and edgy vibes.", 
-    img: "https://i.ibb.co/4wthMNQg/unnamed.jpg" 
-  },
-  { 
     title: "Handcrafted Care", 
     text: "Every detail matters when it comes to your perfect coffee experience.", 
     img: "https://i.ibb.co/x9dBcWN/unnamed.jpg" 
+  },
+  { 
+    title: "Cozy Retreat", 
+    text: "Your favorite neighborhood spot for bold flavors and edgy vibes.", 
+    img: "https://i.ibb.co/4wthMNQg/unnamed.jpg" 
   },
   { 
     title: "Perfect Aroma", 
