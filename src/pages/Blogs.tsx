@@ -493,14 +493,46 @@ function FullVideoCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   
   // Helper to check if it's a direct video link or an Instagram link
   const embedUrl = video.embed_url || '';
-  const isDirectVideo = embedUrl.match(/\.(mp4|webm|ogg)/i);
+  const isDirectVideo = embedUrl.toLowerCase().includes('.mp4') || 
+                        embedUrl.toLowerCase().includes('.webm') || 
+                        embedUrl.toLowerCase().includes('.ogg') ||
+                        embedUrl.toLowerCase().includes('.mov') ||
+                        embedUrl.includes('supabase.co/storage/v1/object/public') ||
+                        embedUrl.includes('firebasestorage.googleapis.com');
+
+  const [hasBeenInView, setHasBeenInView] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+
+  // Intersection Observer to only load/play when in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setHasBeenInView(true);
+        }
+        if (!entry.isIntersecting && isPlaying) {
+          handlePause();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (isDirectVideo && !thumbnail && !isGenerating) {
+    if (isDirectVideo && !thumbnail && !isGenerating && isInView) {
       setIsGenerating(true);
       const videoElement = document.createElement('video');
       videoElement.src = embedUrl;
@@ -517,22 +549,32 @@ function FullVideoCard({
         if (ctx) {
           ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
           try {
-            setThumbnail(canvas.toDataURL('image/jpeg', 0.7));
+            setThumbnail(canvas.toDataURL('image/jpeg', 0.5)); // Lower quality for speed
           } catch (e) {
-            console.warn('Could not generate thumbnail due to CORS or other issues');
+            console.warn('Could not generate thumbnail');
           }
         }
         videoElement.removeEventListener('seeked', handleCapture);
+        videoElement.src = ""; // Clean up
+        videoElement.load();
       };
 
       videoElement.addEventListener('seeked', handleCapture);
       
-      // Fallback if seeked doesn't fire
       videoElement.onloadeddata = () => {
         videoElement.currentTime = 1;
       };
+
+      // Safety timeout
+      setTimeout(() => {
+        if (!thumbnail) {
+          videoElement.removeEventListener('seeked', handleCapture);
+          videoElement.src = "";
+          videoElement.load();
+        }
+      }, 5000);
     }
-  }, [embedUrl, isDirectVideo, thumbnail, isGenerating]);
+  }, [embedUrl, isDirectVideo, thumbnail, isGenerating, isInView]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -540,16 +582,34 @@ function FullVideoCard({
     }
   }, [isUnmuted]);
 
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying && isInView) {
+        if (videoRef.current.readyState >= 2) {
+          videoRef.current.play().catch(() => {});
+        }
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, isInView]);
+
   const handlePlay = () => {
     if (videoRef.current) {
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          console.warn("Playback prevented:", err);
-          setIsPlaying(false);
-        });
+      // Only play if we have enough data
+      if (videoRef.current.readyState >= 2) {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn("Playback prevented:", err);
+            setIsPlaying(false);
+          });
+        }
+        setIsPlaying(true);
+      } else {
+        setIsBuffering(true);
+        setIsPlaying(true); // Set to true so it plays once CanPlay fires
       }
-      setIsPlaying(true);
     }
   };
 
@@ -580,35 +640,73 @@ function FullVideoCard({
     }
   };
 
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    if (!isDirectVideo) return;
+    hoverTimeoutRef.current = setTimeout(() => {
+      handlePlay();
+    }, 300); // 300ms delay to ensure intentional hover
+  };
+
+  const handleMouseLeave = () => {
+    if (!isDirectVideo) return;
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    handlePause();
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      ref={cardRef}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "200px" }}
       className="bg-white/5 rounded-[32px] overflow-hidden border border-white/5"
-      onMouseEnter={isDirectVideo ? handlePlay : undefined}
-      onMouseLeave={isDirectVideo ? handlePause : undefined}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onClick={handleInteraction}
     >
       <div className="aspect-video relative group bg-black flex items-center justify-center cursor-pointer">
         {isDirectVideo ? (
           <>
-            <video 
-              key={embedUrl}
-              ref={videoRef}
-              src={embedUrl} 
-              className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-              muted={!isUnmuted}
-              playsInline
-              loop
-              preload="auto"
-              crossOrigin="anonymous"
-              onCanPlay={() => {
-                if (isPlaying && videoRef.current) {
-                  videoRef.current.play().catch(() => {});
-                }
-              }}
-            />
+            {hasBeenInView && (
+              <video 
+                key={embedUrl}
+                ref={videoRef}
+                src={embedUrl} 
+                className={`w-full h-full object-cover transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
+                muted={!isUnmuted}
+                playsInline
+                loop
+                preload="auto"
+                crossOrigin="anonymous"
+                onWaiting={() => setIsBuffering(true)}
+                onPlaying={() => setIsBuffering(false)}
+                onCanPlay={() => {
+                  setIsBuffering(false);
+                  if (isPlaying && videoRef.current) {
+                    videoRef.current.play().catch(() => {});
+                  }
+                }}
+              />
+            )}
+            
+            {/* Buffering Spinner */}
+            {isBuffering && isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/20">
+                <Loader2 className="w-10 h-10 animate-spin text-primary-brown" />
+              </div>
+            )}
             
             {/* Mute Toggle Button */}
             <button
