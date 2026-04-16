@@ -34,29 +34,24 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     
     // Fetch dynamic store name (defaulting to shivmandir for branding)
-    const fetchStoreName = async (retries = 5) => {
+    const fetchStoreName = async (retries = 6) => {
+      // Add a staggered initial delay to allow server to fully settle (1.5s for navbar)
+      if (retries === 6) await new Promise(r => setTimeout(r, 1500));
+
       try {
-        // Use a more robust URL path
-        const url = '/api/settings/shivmandir';
-        console.log(`[Navbar] Fetching store name (Retries left: ${retries})`);
-        const res = await fetch(url, {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        });
+        const url = `/api/settings/shivmandir?t=${Date.now()}`;
+        console.log(`[Navbar] Fetching store name (Attempt: ${7 - retries})`);
+        const res = await fetch(url);
         if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        console.log('[Navbar] Settings received:', data);
+        console.log('[Navbar] Settings received:', data.store_name);
         if (data.store_name) setStoreName(data.store_name);
       } catch (err) {
         console.error('[Navbar] Error fetching store name:', err);
         if (retries > 0) {
-          const delay = 2000 + (5 - retries) * 1000; // Exponential-ish backoff
-          console.log(`[Navbar] Retrying fetch store name in ${delay}ms... (${retries} retries left)`);
+          const delay = 3500;
           setTimeout(() => fetchStoreName(retries - 1), delay);
         }
       }

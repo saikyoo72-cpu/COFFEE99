@@ -6,27 +6,27 @@ import { Link } from 'react-router-dom';
 const slides = [
   {
     id: 1,
-    image: 'https://i.ibb.co/dxdtzhL/926df87b-7b63-4e3f-ba55-42ebd7dc4319.jpg',
-    title: '',
-    subtitle: '',
-    buttonText: 'Grab this offer',
-    link: '/menu'
+    image: 'https://i.ibb.co/7dfLj61B/unnamed.jpg',
+    title: 'Hot Brownie',
+    subtitle: 'Warm, gooey, and absolutely decadent. Our signature Hot Brownie is the perfect way to end your meal.',
+    buttonText: 'Savor it now',
+    link: '/offer/1'
   },
   {
     id: 2,
-    image: 'https://i.ibb.co/MDjfV9Wf/6eb23f39-e9de-4a5d-bad4-299641f22cfb.jpg',
-    title: '',
-    subtitle: '',
-    buttonText: 'Grab this offer',
-    link: '/menu'
+    image: 'https://i.ibb.co/Nd757XQq/unnamed.jpg',
+    title: 'Chicken Popcorn',
+    subtitle: 'Extra crunchy, extra spicy, and 100% tender. The perfect bite-sized treat for any time!',
+    buttonText: 'Order Now',
+    link: '/offer/2'
   },
   {
     id: 3,
-    image: 'https://i.ibb.co/bg7NZx3Y/abf9d5cb-dc39-4f57-b86c-75a43ef3eec0.jpg',
-    title: '',
-    subtitle: '',
-    buttonText: 'Grab this offer',
-    link: '/creator-program'
+    image: 'https://i.ibb.co/JjPpxCTY/unnamed.jpg',
+    title: 'Loaded French fries',
+    subtitle: 'Try our new Loaded Chicken Fries - a perfect blend of crispiness and flavor.',
+    buttonText: 'Order Now',
+    link: '/offer/3'
   }
 ];
 
@@ -88,7 +88,7 @@ export default function PromotionalCarousel() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative h-[140px] md:h-[200px] overflow-hidden shadow-xl shadow-black/20 bg-latte-beige">
+      <div className="relative h-[200px] md:h-[300px] overflow-hidden shadow-xl shadow-black/20 bg-latte-beige">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={currentIndex}
@@ -106,8 +106,9 @@ export default function PromotionalCarousel() {
             dragElastic={1}
             onDragStart={() => setIsPaused(true)}
             onDragEnd={handleDragEnd}
-            className="absolute inset-0 cursor-grab active:cursor-grabbing"
+            className="absolute inset-0 cursor-pointer"
           >
+            <Link to={slides[currentIndex].link} className="absolute inset-0 z-30" />
             <div 
               className="absolute inset-0 bg-center opacity-90 bg-cover"
               style={{ backgroundImage: `url(${slides[currentIndex].image})` }}

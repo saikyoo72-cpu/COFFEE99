@@ -16,23 +16,44 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Initialize Firebase Admin
+// Initialize Firebase Admin with extra safety
 const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
 let firebaseDb: admin.firestore.Firestore | null = null;
 
 try {
   if (fs.existsSync(firebaseConfigPath)) {
+    console.log("[Server] Found firebase-applet-config.json, initializing...");
     const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
-    admin.initializeApp({
-      projectId: firebaseConfig.projectId,
-    });
-    firebaseDb = admin.firestore().databaseId === firebaseConfig.firestoreDatabaseId 
-      ? admin.firestore() 
-      : admin.firestore(firebaseConfig.firestoreDatabaseId);
-    console.log("[Server] Firebase Admin initialized");
+    
+    if (admin.apps.length === 0) {
+      if (firebaseConfig.projectId) {
+        admin.initializeApp({
+          projectId: firebaseConfig.projectId,
+        });
+        console.log("[Server] Firebase Admin app initialized for project:", firebaseConfig.projectId);
+      } else {
+        console.warn("[Server] No projectId in firebase-applet-config.json");
+      }
+    }
+    
+    // Correct way to initialize a named database in firebase-admin
+    if (admin.apps.length > 0) {
+      try {
+        if (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)') {
+          firebaseDb = admin.firestore(firebaseConfig.firestoreDatabaseId);
+        } else {
+          firebaseDb = admin.firestore();
+        }
+        console.log("[Server] Firestore instance retrieved successfully");
+      } catch (dbErr: any) {
+        console.error("[Server] Failed to get Firestore instance:", dbErr.message);
+      }
+    }
+  } else {
+    console.log("[Server] No firebase-applet-config.json found, skipping Firebase Admin init");
   }
-} catch (err) {
-  console.error("[Server] Failed to initialize Firebase Admin:", err);
+} catch (err: any) {
+  console.error("[Server] Critical failure during Firebase Admin initialization:", err.message);
 }
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -66,10 +87,13 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow all origins for public API routes, but be specific for credentials if needed
+    callback(null, true);
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Cache-Control"]
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Cache-Control", "X-Requested-With"]
 }));
 app.use(express.json());
 app.use(cookieParser("coffee99-secret-key"));

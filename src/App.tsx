@@ -23,6 +23,7 @@ const OrderPlaced = lazy(() => import('./pages/OrderPlaced'));
 const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Blogs = lazy(() => import('./pages/Blogs'));
 const CreatorProgram = lazy(() => import('./pages/CreatorProgram'));
+const OfferDetail = lazy(() => import('./pages/OfferDetail'));
 
 // Loading fallback component
 const PageLoader = ({ isDark }: { isDark?: boolean }) => (
@@ -55,6 +56,7 @@ function AppContent() {
             <Route path="/order-placed" element={<OrderPlaced />} />
             <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/track-order/:id" element={<TrackOrder />} />
+            <Route path="/offer/:id" element={<OfferDetail />} />
           </Routes>
         </Suspense>
       </main>
@@ -66,13 +68,23 @@ function AppContent() {
 
 export default function App() {
   React.useEffect(() => {
-    const checkHealth = async () => {
+    const checkHealth = async (retries = 6) => {
+      // Small staggered delay to give server time to stabilize
+      if (retries === 6) await new Promise(r => setTimeout(r, 1000));
+
       try {
-        const res = await fetch(`/api/health`);
+        const url = `/api/health?t=${Date.now()}`;
+        console.log(`[App] API Health Check (Attempt: ${7 - retries})`);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log('[App] API Health Check:', data);
+        console.log('[App] API Health Check Success:', data.status);
       } catch (err) {
         console.error('[App] API Health Check Failed:', err);
+        if (retries > 0) {
+          const delay = 3000;
+          setTimeout(() => checkHealth(retries - 1), delay);
+        }
       }
     };
     checkHealth();

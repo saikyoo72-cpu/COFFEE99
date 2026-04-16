@@ -101,7 +101,7 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       {/* 2. HERO SECTION */}
-      <section className="relative h-[90vh] md:h-[110vh] flex items-center justify-center overflow-hidden cursor-grab select-none">
+      <section className="relative h-[100vh] md:h-[120vh] flex items-center justify-center overflow-hidden cursor-grab select-none">
         {/* Background Slider & Drag Area */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           <AnimatePresence initial={false} custom={direction}>
@@ -136,7 +136,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none"></div>
         </div>
 
-        <div className={`relative z-20 text-center w-full pb-12 md:pb-20 flex flex-col items-center justify-center min-h-[90vh] md:min-h-[110vh] pointer-events-none ${currentSlide === 0 ? 'pt-56 md:pt-72' : 'pt-48 md:pt-60'}`}>
+        <div className={`relative z-20 text-center w-full pb-12 md:pb-20 flex flex-col items-center justify-center min-h-[100vh] md:min-h-[120vh] pointer-events-none ${currentSlide === 0 ? 'pt-56 md:pt-72' : 'pt-48 md:pt-60'}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}

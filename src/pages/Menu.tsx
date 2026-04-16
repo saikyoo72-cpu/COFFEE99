@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, ShoppingBag, AlertCircle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
@@ -9,6 +10,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function Menu() {
   const { addToCart } = useCart();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [outOfStockItems, setOutOfStockItems] = useState<string[]>([]);
@@ -19,6 +21,16 @@ export default function Menu() {
   useEffect(() => {
     fetchAvailability();
   }, [lastBranchId]);
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const targetItem = allItems.find(i => i.itemId === id);
+      if (targetItem) {
+        setActiveCategory(targetItem.categoryTitle);
+      }
+    }
+  }, [location.hash]);
 
   const fetchAvailability = async () => {
     try {
@@ -124,6 +136,7 @@ export default function Menu() {
               return (
                 <motion.div
                   layout
+                  id={item.itemId}
                   key={`${item.categoryTitle}-${item.name}-${idx}`}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -135,7 +148,9 @@ export default function Menu() {
                   transition={{ duration: 0.5 }}
                   className={`bg-latte-beige rounded-[32px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:-translate-y-2 hover:shadow-2xl transition-all duration-500 relative ${
                     item.highlight ? 'ring-2 ring-caramel ring-offset-4 ring-offset-cream-bg' : ''
-                  } ${isOutOfStock ? 'opacity-80' : ''}`}
+                  } ${isOutOfStock ? 'opacity-80' : ''} ${
+                    location.hash === `#${item.itemId}` ? 'ring-4 ring-primary-brown ring-offset-4' : ''
+                  }`}
                   data-category={item.categoryTitle.toLowerCase()}
                 >
                 <div className="p-6">

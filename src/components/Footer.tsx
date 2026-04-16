@@ -8,28 +8,24 @@ export default function Footer() {
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    const fetchSettings = async (retries = 5) => {
+    const fetchSettings = async (retries = 6) => {
+      // Add a staggered initial delay to allow server to fully settle (2s for footer)
+      if (retries === 6) await new Promise(r => setTimeout(r, 2000));
+
       try {
-        const url = '/api/settings/shivmandir';
-        console.log(`[Footer] Fetching settings (Retries left: ${retries})`);
-        const res = await fetch(url, {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        });
+        const url = `/api/settings/shivmandir?t=${Date.now()}`;
+        console.log(`[Footer] Fetching settings (Attempt: ${7 - retries})`);
+        const res = await fetch(url);
         if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText}`);
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
         const data = await res.json();
-        console.log('[Footer] Settings received:', data);
+        console.log('[Footer] Settings received:', data.store_name);
         setSettings(data);
       } catch (err) {
         console.error('[Footer] Error fetching footer settings:', err);
         if (retries > 0) {
-          const delay = 2000 + (5 - retries) * 1000; // Exponential-ish backoff
-          console.log(`[Footer] Retrying fetch footer settings in ${delay}ms... (${retries} retries left)`);
+          const delay = 4000;
           setTimeout(() => fetchSettings(retries - 1), delay);
         }
       }

@@ -140,6 +140,7 @@ export const fullMenu: MenuCategory[] = [
   {
     title: "HOT DESSERT",
     items: [
+      { name: "Hot Brownie", description: "Warm, gooey & chocolate heaven", price: "₹99", image: "https://i.ibb.co/7dfLj61B/unnamed.jpg", isVeg: true },
       { name: "Hot Brownie with Vanilla Ice Cream", description: "Warm chocolate brownie with cold vanilla ice cream.", price: "₹99", image: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&q=80&w=400", isVeg: true }
     ]
   },
@@ -199,6 +200,7 @@ export const fullMenu: MenuCategory[] = [
     title: "CHICKEN FRY ITEMS",
     items: [
       { name: "Chicken Cheese Nuggets (4 pcs)", description: "Four cheesy chicken nuggets.", price: "₹65", image: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&q=80&w=400", isVeg: false },
+      { name: "Chicken Balls", description: "Juicy bites packed with flavor", price: "₹119", image: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&q=80&w=400", isVeg: false },
       { name: "Chicken Popcorn (8 pcs)", description: "Eight bite-sized chicken popcorn pieces.", price: "₹99", image: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&q=80&w=400", isVeg: false },
       { name: "Chicken Popcorn (18 pcs)", description: "Eighteen bite-sized chicken popcorn pieces.", price: "₹119", image: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&q=80&w=400", isVeg: false },
       { name: "Chicken Wings (5 pcs)", description: "Five pieces of spicy fried chicken wings.", price: "₹99", image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?auto=format&fit=crop&q=80&w=400", isVeg: false },
@@ -229,6 +231,7 @@ export const fullMenu: MenuCategory[] = [
   {
     title: "FRY ITEMS",
     items: [
+      { name: "Loaded Chicken Fries", description: "Crispy, cheesy & fully loaded", price: "₹149", image: "https://i.ibb.co/JjPpxCTY/unnamed.jpg", isVeg: true },
       { name: "French Fry Small", description: "Classic salted french fries - small portion.", price: "₹70", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400", isVeg: true },
       { name: "French Fry Large", description: "Classic salted french fries - large portion.", price: "₹90", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400", isVeg: true },
       { name: "French Fry with Mayonnaise", description: "French fries served with creamy mayonnaise.", price: "₹80", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400", isVeg: true },
