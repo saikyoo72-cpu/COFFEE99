@@ -24,6 +24,8 @@ const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Blogs = lazy(() => import('./pages/Blogs'));
 const CreatorProgram = lazy(() => import('./pages/CreatorProgram'));
 const OfferDetail = lazy(() => import('./pages/OfferDetail'));
+const HotItems = lazy(() => import('./pages/HotItems'));
+const HotItemDetail = lazy(() => import('./pages/HotItemDetail'));
 
 // Loading fallback component
 const PageLoader = ({ isDark }: { isDark?: boolean }) => (
@@ -34,7 +36,7 @@ const PageLoader = ({ isDark }: { isDark?: boolean }) => (
 
 function AppContent() {
   const location = useLocation();
-  const isDarkPage = location.pathname === '/blogs' || location.pathname === '/creator-program';
+  const isDarkPage = location.pathname === '/blogs' || location.pathname === '/creator-program' || location.pathname.startsWith('/hot-items');
 
   return (
     <div className={`min-h-screen font-sans ${isDarkPage ? 'bg-[#0f0f0f]' : 'bg-cream-bg'}`}>
@@ -57,6 +59,8 @@ function AppContent() {
             <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/track-order/:id" element={<TrackOrder />} />
             <Route path="/offer/:id" element={<OfferDetail />} />
+            <Route path="/hot-items" element={<HotItems />} />
+            <Route path="/hot-items/:slug" element={<HotItemDetail />} />
           </Routes>
         </Suspense>
       </main>

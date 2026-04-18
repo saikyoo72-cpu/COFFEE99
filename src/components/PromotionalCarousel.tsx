@@ -6,27 +6,30 @@ import { Link } from 'react-router-dom';
 const slides = [
   {
     id: 1,
-    image: 'https://i.ibb.co/7dfLj61B/unnamed.jpg',
-    title: 'Hot Brownie',
-    subtitle: 'Warm, gooey, and absolutely decadent. Our signature Hot Brownie is the perfect way to end your meal.',
-    buttonText: 'Savor it now',
-    link: '/offer/1'
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1920',
+    label: 'Our Blog',
+    title: 'Explore Our Stories 🎬',
+    subtitle: 'Watch our latest videos, behind-the-scenes moments, and coffee stories.',
+    buttonText: 'Watch Now',
+    link: '/blogs'
   },
   {
     id: 2,
-    image: 'https://i.ibb.co/Nd757XQq/unnamed.jpg',
-    title: 'Chicken Popcorn',
-    subtitle: 'Extra crunchy, extra spicy, and 100% tender. The perfect bite-sized treat for any time!',
-    buttonText: 'Order Now',
-    link: '/offer/2'
+    image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1920',
+    label: 'FOR CREATORS 🎥',
+    title: 'Join Our Creator Squad',
+    subtitle: 'Are you a content creator? Collaborate with Coffee99, get featured, and grow with us.',
+    buttonText: 'Join Now',
+    link: '/creator-program'
   },
   {
     id: 3,
-    image: 'https://i.ibb.co/JjPpxCTY/unnamed.jpg',
-    title: 'Loaded French fries',
-    subtitle: 'Try our new Loaded Chicken Fries - a perfect blend of crispiness and flavor.',
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=1920',
+    label: 'Hot Picks 🔥',
+    title: 'New Hot Items 🔥',
+    subtitle: 'Try our latest hot and trending items, freshly made and full of flavor.',
     buttonText: 'Order Now',
-    link: '/offer/3'
+    link: '/hot-items'
   }
 ];
 
@@ -146,7 +149,7 @@ export default function PromotionalCarousel() {
                     transition={{ delay: 0.2 }}
                   >
                     <span className="inline-block px-3 py-1 bg-primary-brown/20 text-primary-brown text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-3 border border-primary-brown/30">
-                      Featured Offer
+                      {slides[currentIndex].label}
                     </span>
                     <h2 className="text-xl md:text-2xl font-serif font-bold text-white mb-1 leading-tight">
                       {slides[currentIndex].title}
