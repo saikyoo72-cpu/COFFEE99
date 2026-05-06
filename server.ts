@@ -6,7 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 import path from 'path';
 import { fileURLToPath } from "url";
 import cors from "cors";
-import admin from "firebase-admin";
 import fs from "fs";
 
 console.log("[Server] Starting server script...");
@@ -15,46 +14,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-
-// Initialize Firebase Admin with extra safety
-const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
-let firebaseDb: admin.firestore.Firestore | null = null;
-
-try {
-  if (fs.existsSync(firebaseConfigPath)) {
-    console.log("[Server] Found firebase-applet-config.json, initializing...");
-    const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
-    
-    if (admin.apps.length === 0) {
-      if (firebaseConfig.projectId) {
-        admin.initializeApp({
-          projectId: firebaseConfig.projectId,
-        });
-        console.log("[Server] Firebase Admin app initialized for project:", firebaseConfig.projectId);
-      } else {
-        console.warn("[Server] No projectId in firebase-applet-config.json");
-      }
-    }
-    
-    // Correct way to initialize a named database in firebase-admin
-    if (admin.apps.length > 0) {
-      try {
-        if (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)') {
-          firebaseDb = admin.firestore(firebaseConfig.firestoreDatabaseId);
-        } else {
-          firebaseDb = admin.firestore();
-        }
-        console.log("[Server] Firestore instance retrieved successfully");
-      } catch (dbErr: any) {
-        console.error("[Server] Failed to get Firestore instance:", dbErr.message);
-      }
-    }
-  } else {
-    console.log("[Server] No firebase-applet-config.json found, skipping Firebase Admin init");
-  }
-} catch (err: any) {
-  console.error("[Server] Critical failure during Firebase Admin initialization:", err.message);
-}
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[Server] Unhandled Rejection at:', promise, 'reason:', reason);
@@ -88,7 +47,7 @@ const PORT = 3000;
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow all origins for public API routes, but be specific for credentials if needed
+    // Allow all origins for public API routes
     callback(null, true);
   },
   credentials: true,
@@ -123,7 +82,7 @@ app.get("/api/health", (req, res) => {
   console.log("[API] Health check requested");
   res.json({ 
     status: "ok", 
-    supabase: !!supabaseUrl && !!supabaseServiceKey,
+    supabase: !!supabase && !!supabaseUrl && !!supabaseServiceKey,
     time: new Date().toISOString()
   });
 });
@@ -183,62 +142,34 @@ app.get("/api/settings/:branchId", async (req, res) => {
   const fallbackSettings = {
     store_name: "Coffee99",
     store_email: "contact@coffee99.com",
-    store_address: "Shivmandir, Siliguri, West Bengal"
+    store_address: "Shivmandir, Near Sri Nara Singha Vidyapith, Siliguri, West Bengal"
   };
 
   try {
-    // 1. Try Firebase first as the primary source for this app
-    if (firebaseDb) {
-      try {
-        const doc = await firebaseDb.collection('admin_settings').doc(branchId).get();
-        if (doc.exists) {
-          const settings = doc.data();
-          console.log(`[API] Settings found in Firebase for ${branchId}`);
-          return res.json({
-            store_name: settings?.store_name || fallbackSettings.store_name,
-            store_email: settings?.store_email || fallbackSettings.store_email,
-            store_address: settings?.store_address || fallbackSettings.store_address,
-            db_connected: true,
-            source: 'firebase'
-          });
-        }
-      } catch (firebaseErr: any) {
-        console.warn(`[API] Firebase fetch failed for ${branchId}:`, firebaseErr.message);
+    if (supabase) {
+      const { data: settings, error } = await supabase
+        .from("admin_settings")
+        .select("*")
+        .eq("branch_id", branchId)
+        .maybeSingle();
+      
+      if (!error && settings) {
+        console.log(`[API] Settings found in Supabase for ${branchId}`);
+        return res.json({
+          store_name: settings.store_name || fallbackSettings.store_name,
+          store_email: settings.store_email || fallbackSettings.store_email,
+          store_address: settings.store_address || fallbackSettings.store_address,
+          db_connected: true,
+          source: 'supabase'
+        });
+      }
+
+      if (error) {
+        console.error(`[API] Supabase error for ${branchId}:`, error.message);
       }
     }
 
-    // 2. Try Supabase as secondary source (with a short timeout)
-    if (supabase && supabaseUrl && !supabaseUrl.includes('placeholder')) {
-      try {
-        const settingsPromise = supabase
-          .from("admin_settings")
-          .select("*")
-          .eq("branch_id", branchId)
-          .maybeSingle();
-
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Supabase timeout")), 2000)
-        );
-
-        const { data: settings, error }: any = await Promise.race([settingsPromise, timeoutPromise]);
-        
-        if (!error && settings) {
-          console.log(`[API] Settings found in Supabase for ${branchId}`);
-          return res.json({
-            store_name: settings.store_name || fallbackSettings.store_name,
-            store_email: settings.store_email || fallbackSettings.store_email,
-            store_address: settings.store_address || fallbackSettings.store_address,
-            db_connected: true,
-            source: 'supabase'
-          });
-        }
-      } catch (supabaseErr: any) {
-        // Log as info/debug rather than warning to avoid cluttering logs when fallback is working
-        console.log(`[API] Supabase fetch skipped or timed out for ${branchId}:`, supabaseErr.message);
-      }
-    }
-
-    // 3. Final fallback
+    // Final fallback
     console.log(`[API] Using hardcoded fallback for ${branchId}`);
     res.json({ ...fallbackSettings, db_connected: false, source: 'fallback' });
     

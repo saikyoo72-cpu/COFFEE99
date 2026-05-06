@@ -253,40 +253,40 @@ export const branches: Branch[] = [
     name: "Shivmandir",
     description: "A serene spot perfect for a peaceful morning coffee or a sunset treat.",
     image: "https://i.ibb.co/0jz0Shfm/unnamed.jpg",
-    address: "Shimandir, Siliguri, West Bengal",
-    hours: "Daily: 8am - 10pm",
+    address: "Shivmandir, Near Sri Nara Singha Vidyapith, Siliguri, West Bengal",
+    hours: "Daily: 10am - 10pm",
     mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3563.876543210987!2d88.35!3d26.71!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDQyJzM2LjAiTiA4OMKwMjEnMDAuMCJF!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin",
     gallery: [
-      "https://i.ibb.co/ch414TRB/unnamed.jpg",
-      "https://i.ibb.co/GQ5XWmFL/unnamed.jpg",
-      "https://i.ibb.co/Cs51SHDV/unnamed.jpg",
-      "https://i.ibb.co/Z6NZZZmf/unnamed.jpg"
+      "https://i.ibb.co/XfzrbgFf/unnamed.jpg",
+      "https://i.ibb.co/7wMcdqb/unnamed.jpg",
+      "https://i.ibb.co/KxwMX6tS/unnamed.jpg",
+      "https://i.ibb.co/79fqpp2/unnamed.jpg"
     ],
     menu: fullMenu
   },
   {
     id: "hakimpara",
-    name: "hakimpara",
+    name: "Hakimpara",
     description: "Our vibrant city center location, ideal for quick breaks and social gatherings.",
     image: "https://i.ibb.co/vxWPCj2t/image.jpg",
-    address: "Hakimpara, Siliguri, West Bengal",
-    hours: "Daily: 9am - 11pm",
+    address: "Hakimpara, Near Yellow Building, Siliguri, West Bengal",
+    hours: "Daily: 10am - 10pm",
     mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3563.876543210987!2d88.42!3d26.72!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDQzJzEyLjAiTiA4OMKwMjUnMTIuMCJF!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin",
     gallery: [
-      "https://i.ibb.co/Kcgyp1V3/image.jpg",
-      "https://i.ibb.co/JRPr02GJ/image.jpg",
-      "https://i.ibb.co/jZsnSH1D/image.jpg",
-      "https://i.ibb.co/k6gxQqT4/image.jpg"
+      "https://i.ibb.co/5Xq3chLJ/unnamed.jpg",
+      "https://i.ibb.co/CpgCV31b/unnamed.jpg",
+      "https://i.ibb.co/yBm5R09d/unnamed.jpg",
+      "https://i.ibb.co/zW8zwBpg/unnamed.jpg"
     ],
     menu: fullMenu
   },
   {
     id: "shalbari",
-    name: "shalbari",
+    name: "Shalbari",
     description: "A cozy retreat offering a relaxed vibe and fresh brews.",
     image: "https://i.ibb.co/4nXGw2tv/unnamed.jpg",
-    address: "Shalbari, Siliguri, West Bengal",
-    hours: "Daily: 8am - 9pm",
+    address: "Shalbari, Near Jio Mart, Siliguri, West Bengal",
+    hours: "Daily: 12pm - 9:30pm",
     mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3563.876543210987!2d88.38!3d26.70!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDQyJzAwLjAiTiA4OMKwMjInNDguMCJF!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin",
     gallery: [
       "https://i.ibb.co/3yX5ds3S/unnamed.jpg",
@@ -298,26 +298,26 @@ export const branches: Branch[] = [
   },
   {
     id: "bara-mohansingh",
-    name: "bara mohansingh",
-    description: "Our flagship store in the heart of the city, perfect for business meetings and quick breaks.",
+    name: "Medical More (Bara Mohansingh)",
+    description: "Our flagship store at Medical More, perfect for business meetings, healthcare professionals, and quick breaks.",
     image: "https://i.ibb.co/CpwB72zX/image.jpg",
-    address: "Bara Mohansingh, Siliguri, West Bengal",
-    hours: "Daily: 7am - 10pm",
+    address: "Medical More, Near Mukta Nursing Home, Bara Mohansingh, Siliguri, West Bengal",
+    hours: "Daily: 10am - 10pm",
     mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3563.876543210987!2d88.32!3d26.68!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDQwJzQ4LjAiTiA4OMKwMTknMTIuMCJF!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin",
     gallery: [
-      "https://i.ibb.co/d4P4L32z/image.jpg",
-      "https://i.ibb.co/7tPJ6bp4/image.jpg",
-      "https://i.ibb.co/zhPD9RzR/image.jpg",
-      "https://i.ibb.co/hJgV8vhS/image.jpg"
+      "https://i.ibb.co/5hzf4yXC/unnamed.jpg",
+      "https://i.ibb.co/RGpnbrRN/unnamed.jpg",
+      "https://i.ibb.co/23RqSJS0/unnamed.jpg",
+      "https://i.ibb.co/zTfxRFp3/unnamed.jpg"
     ],
     menu: fullMenu
   },
   {
     id: "ashram-para",
-    name: "ashram para",
+    name: "Ashram Para",
     description: "A modern and spacious outlet perfect for family outings and large groups.",
     image: "https://i.ibb.co/K4GjvKN/image.jpg",
-    address: "Ashram Para, Siliguri, West Bengal",
+    address: "Ashram Para, Near Anjali Jewellers, Siliguri, West Bengal",
     hours: "Daily: 10am - 10pm",
     mapEmbed: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3563.876543210987!2d88.37!3d26.73!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjbCsDQzJzQ4LjAiTiA4OMKwMjInMTIuMCJF!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin",
     gallery: [

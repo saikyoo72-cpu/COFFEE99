@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Phone, Clock, ArrowLeft, Coffee, Utensils, Star, Image as ImageIcon, ShoppingBag, Search, X } from 'lucide-react';
+import { MapPin, Phone, Clock, ArrowLeft, Coffee, Utensils, Star, Image as ImageIcon, ShoppingBag, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { branches } from '../data';
 import { useCart } from '../context/CartContext';
 
@@ -10,7 +10,7 @@ export default function Branch() {
   const { id } = useParams<{ id: string }>();
   const branch = branches.find(b => b.id === id);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -177,7 +177,7 @@ export default function Branch() {
                 transition={{ delay: idx * 0.1 }}
                 whileHover={{ scale: 1.02 }}
                 className="aspect-square rounded-3xl overflow-hidden cursor-pointer shadow-2xl border border-white/5 group"
-                onClick={() => setSelectedImage(img)}
+                onClick={() => setSelectedImageIndex(idx)}
               >
                 <div className="relative w-full h-full">
                   <img 
@@ -201,33 +201,75 @@ export default function Branch() {
 
       {/* Image Modal */}
       <AnimatePresence>
-        {selectedImage && (
+        {selectedImageIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl"
+            onClick={() => setSelectedImageIndex(null)}
           >
+            {/* Close Button */}
+            <button 
+              onClick={() => setSelectedImageIndex(null)}
+              className="absolute top-4 right-4 md:top-8 md:right-8 z-[210] p-3 md:p-4 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-primary-brown transition-all border border-white/20 shadow-2xl group"
+            >
+              <X className="h-5 w-5 md:h-6 md:w-6 group-hover:rotate-90 transition-transform duration-300" />
+            </button>
+
+            {/* Navigation Buttons */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((prev) => 
+                  prev !== null ? (prev - 1 + branch.gallery.length) % branch.gallery.length : null
+                );
+              }}
+              className="absolute left-2 md:left-8 z-[210] p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-full text-white hover:bg-primary-brown transition-all border border-white/10 group md:h-20 md:w-20 flex items-center justify-center shadow-2xl"
+            >
+              <ChevronLeft className="h-6 w-6 md:h-10 md:w-10 group-hover:-translate-x-1 transition-transform" />
+            </button>
+
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((prev) => 
+                  prev !== null ? (prev + 1) % branch.gallery.length : null
+                );
+              }}
+              className="absolute right-2 md:right-8 z-[210] p-3 md:p-4 bg-white/5 backdrop-blur-md rounded-full text-white hover:bg-primary-brown transition-all border border-white/10 group md:h-20 md:w-20 flex items-center justify-center shadow-2xl"
+            >
+              <ChevronRight className="h-6 w-6 md:h-10 md:w-10 group-hover:translate-x-1 transition-transform" />
+            </button>
+
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-5xl w-full max-h-[80vh] rounded-[40px] overflow-hidden shadow-2xl border border-white/10"
+              key={selectedImageIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full h-full flex items-center justify-center overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={selectedImage} 
+                src={branch.gallery[selectedImageIndex]} 
                 alt="Gallery preview" 
-                className="w-full h-full object-contain bg-black"
+                className="w-full h-auto max-h-[85vh] md:max-h-[92vh] md:w-auto md:max-w-[90vw] object-contain rounded-[32px] md:rounded-[60px] shadow-[0_0_200px_rgba(0,0,0,0.9)] border border-white/20"
                 referrerPolicy="no-referrer"
               />
-              <button 
-                onClick={() => setSelectedImage(null)}
-                className="absolute top-6 right-6 p-3 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-primary-brown transition-colors shadow-xl"
-              >
-                <X className="h-6 w-6" />
-              </button>
+              
+              {/* Pagination Indicator */}
+              <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                {branch.gallery.map((_, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => setSelectedImageIndex(i)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === selectedImageIndex ? 'w-8 md:w-10 bg-primary-brown' : 'w-1.5 md:w-2 bg-white/30 hover:bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
             </motion.div>
           </motion.div>
         )}

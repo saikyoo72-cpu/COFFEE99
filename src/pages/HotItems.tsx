@@ -8,14 +8,14 @@ const hotItems = [
     slug: 'fries',
     name: 'Loaded French Fries',
     tagline: 'Cheesy, crispy, and loaded with flavor.',
-    image: 'https://files.catbox.moe/zkyu8y.png',
+    image: 'https://i.ibb.co/JjPpxCTY/unnamed.jpg',
     rating: 4.9
   },
   {
     slug: 'popcorn',
-    name: 'Chicken Balls',
+    name: 'Chicken Popcorn',
     tagline: 'Crunchy, spicy, and bite-sized delight.',
-    image: 'https://files.catbox.moe/udbco5.png',
+    image: 'https://i.ibb.co/95JWsVQ/unnamed.jpg',
     rating: 4.8
   },
   {

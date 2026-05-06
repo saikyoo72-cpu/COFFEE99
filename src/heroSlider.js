@@ -15,9 +15,10 @@ const slides = [
     img: "https://i.ibb.co/4wthMNQg/unnamed.jpg" 
   },
   { 
-    title: "Perfect Aroma", 
-    text: "Indulge in the rich scent and flavor of our expertly roasted beans.", 
-    img: "https://i.ibb.co/RG5tPmY7/unnamed.jpg" 
+    title: "Our Bestsellers", 
+    text: "Experience the most-loved flavors from Burger to Cold Coffee. Starting at ₹49.", 
+    img: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?auto=format&fit=crop&q=80&w=1920",
+    type: "bestsellers"
   },
 ];
 

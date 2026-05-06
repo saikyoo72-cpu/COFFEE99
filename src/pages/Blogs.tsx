@@ -228,8 +228,11 @@ export default function Blogs() {
     }
   };
 
-  // All videos are displayed in a single list now as 'type' is removed
-  const allVideos = videos;
+  // Distribute videos across three categories
+  // We use slicing and duplication to ensure all sections are populated even with few videos
+  const featuredReels = videos.length > 0 ? videos.slice(0, Math.max(2, Math.ceil(videos.length / 1.5))) : [];
+  const foodVideos = videos.length > 0 ? (videos.length > 1 ? [...videos.slice(Math.floor(videos.length / 2)), ...videos.slice(0, Math.floor(videos.length / 2))] : videos) : [];
+  const creatorVideos = videos.length > 0 ? [...videos].reverse() : [];
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white font-sans selection:bg-primary-brown/30">
@@ -254,29 +257,74 @@ export default function Blogs() {
             <p className="text-gray-500 animate-pulse">Loading amazing content...</p>
           </div>
         ) : (
-          <section className="px-4">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <span className="w-1 h-6 bg-primary-brown rounded-full"></span>
-                Community Reviews
-              </h2>
-            </div>
+          <div className="space-y-16 px-4">
+            {/* Featured Reels Section */}
+            <section>
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-primary-brown rounded-full"></span>
+                  Featured Reels 🎬
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {featuredReels.map((video) => (
+                  <FullVideoCard 
+                    key={`featured-${video.id}`} 
+                    video={video} 
+                    isUnmuted={unmutedVideoId === video.id}
+                    onToggleMute={() => setUnmutedVideoId(unmutedVideoId === video.id ? null : video.id)}
+                    onDelete={() => initiateDelete(video.id)}
+                  />
+                ))}
+              </div>
+            </section>
 
-            <div className="space-y-8">
-              {videos.map((video) => (
-                <FullVideoCard 
-                  key={video.id} 
-                  video={video} 
-                  isUnmuted={unmutedVideoId === video.id}
-                  onToggleMute={() => setUnmutedVideoId(unmutedVideoId === video.id ? null : video.id)}
-                  onDelete={() => initiateDelete(video.id)}
-                />
-              ))}
-              {videos.length === 0 && (
-                <p className="text-center text-gray-500 py-10">No videos found. Be the first to share one!</p>
-              )}
-            </div>
-          </section>
+            {/* Food Videos Section */}
+            <section>
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-primary-brown rounded-full"></span>
+                  Food Videos 🍟
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {foodVideos.map((video) => (
+                  <FullVideoCard 
+                    key={`food-${video.id}`} 
+                    video={video} 
+                    isUnmuted={unmutedVideoId === video.id}
+                    onToggleMute={() => setUnmutedVideoId(unmutedVideoId === video.id ? null : video.id)}
+                    onDelete={() => initiateDelete(video.id)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Creator Videos Section */}
+            <section>
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-primary-brown rounded-full"></span>
+                  Creator Videos 🎥
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {creatorVideos.map((video) => (
+                  <FullVideoCard 
+                    key={`creator-${video.id}`} 
+                    video={video} 
+                    isUnmuted={unmutedVideoId === video.id}
+                    onToggleMute={() => setUnmutedVideoId(unmutedVideoId === video.id ? null : video.id)}
+                    onDelete={() => initiateDelete(video.id)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {videos.length === 0 && (
+              <p className="text-center text-gray-500 py-10">No videos found. Be the first to share one!</p>
+            )}
+          </div>
         )}
       </main>
 
@@ -503,8 +551,7 @@ function FullVideoCard({
                         embedUrl.toLowerCase().includes('.webm') || 
                         embedUrl.toLowerCase().includes('.ogg') ||
                         embedUrl.toLowerCase().includes('.mov') ||
-                        embedUrl.includes('supabase.co/storage/v1/object/public') ||
-                        embedUrl.includes('firebasestorage.googleapis.com');
+                        embedUrl.includes('supabase.co/storage/v1/object/public');
 
   const [hasBeenInView, setHasBeenInView] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);

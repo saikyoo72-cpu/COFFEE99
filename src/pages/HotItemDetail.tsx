@@ -8,15 +8,15 @@ const itemDetails = {
     name: 'Loaded French Fries',
     description: 'Crispy golden fries loaded with cheese and flavor. Perfect snack for every craving. Each bite is a mix of crunchy textures and molten goodness.',
     price: '₹90',
-    image: 'https://files.catbox.moe/zkyu8y.png',
+    image: 'https://i.ibb.co/JjPpxCTY/unnamed.jpg',
     prepTime: '12 min',
     energy: '320 kcal'
   },
   popcorn: {
-    name: 'Chicken Balls',
+    name: 'Chicken Popcorn',
     description: 'Crunchy, spicy, and bite-sized delight. Made with premium tender chicken breast and seasoned with our secret spice blend.',
     price: '₹99',
-    image: 'https://files.catbox.moe/udbco5.png',
+    image: 'https://i.ibb.co/95JWsVQ/unnamed.jpg',
     prepTime: '15 min',
     energy: '450 kcal'
   },

@@ -5,8 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
-import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export default function Menu() {
   const { addToCart } = useCart();
@@ -34,13 +33,14 @@ export default function Menu() {
 
   const fetchAvailability = async () => {
     try {
-      const q = query(
-        collection(db, 'menu_availability'),
-        where('branch_id', '==', lastBranchId),
-        where('is_available', '==', false)
-      );
-      const snapshot = await getDocs(q);
-      setOutOfStockItems(snapshot.docs.map(doc => doc.data().item_id));
+      const { data, error } = await supabase
+        .from('menu_availability')
+        .select('item_id')
+        .eq('branch_id', lastBranchId)
+        .eq('is_available', false);
+      
+      if (error) throw error;
+      setOutOfStockItems(data?.map(item => item.item_id) || []);
     } catch (err) {
       console.error('Error fetching availability:', err);
     }
