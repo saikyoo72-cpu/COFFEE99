@@ -147,168 +147,56 @@ export default function Home() {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="max-w-5xl mx-auto px-4 w-full"
             >
-              {slides[currentSlide].type === 'bestsellers' ? (
-                <div className="relative w-full max-w-6xl mx-auto py-8 md:py-16 px-4 rounded-[2.5rem] md:rounded-[4rem] overflow-hidden border border-white/5 bg-black/20 backdrop-blur-sm shadow-2xl">
-                  {/* Premium Subtle Background behind title and cards */}
-                  <div className="absolute inset-0 -z-10 bg-black">
-                    <img 
-                      src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1200" 
-                      alt="" 
-                      className="w-full h-full object-cover opacity-15 blur-md scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-80" />
-                  </div>
-
-                  <div className="flex flex-col items-center relative z-10">
-                    <div className="w-full overflow-hidden pointer-events-auto">
-                      <motion.div 
-                        className="flex gap-4 md:gap-8 justify-center px-4 overflow-x-auto md:overflow-visible no-scrollbar pb-4"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {[
-                          { 
-                            name: "Burgers", 
-                            price: 49, 
-                            img: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&q=80&w=400",
-                            label: "Starting at",
-                            badge: "OFFER",
-                            isPromo: true
-                          },
-                          { 
-                            name: "Cold Coffee", 
-                            price: 119, 
-                            img: "https://images.unsplash.com/photo-1541173230599-a362db2327a7?auto=format&fit=crop&q=80&w=400",
-                            premium: true 
-                          },
-                          { 
-                            name: "Loaded Fries", 
-                            price: 90, 
-                            img: "https://i.ibb.co/JjPpxCTY/unnamed.jpg" 
-                          },
-                          { 
-                            name: "Chicken Popcorn", 
-                            price: 99, 
-                            img: "https://i.ibb.co/95JWsVQ/unnamed.jpg" 
-                          }
-                        ].map((item, i) => (
-                          <motion.div 
-                            key={i}
-                            whileHover={{ y: -10, scale: 1.05, filter: "brightness(1.15)" }}
-                            className="group relative bg-[#0c0c0c]/80 backdrop-blur-2xl rounded-[2.5rem] p-2.5 md:p-4 border border-white/10 w-32 md:w-48 flex-shrink-0 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300"
-                          >
-                            {/* Premium Glow for Promo */}
-                            {item.isPromo && (
-                              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 animate-pulse" />
-                            )}
-                            
-                            <div className="relative h-24 md:h-36 overflow-hidden rounded-[1.5rem] mb-3">
-                              <motion.img 
-                                src={item.img} 
-                                alt={item.name} 
-                                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                              />
-                              {item.badge && (
-                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.6)] animate-bounce">
-                                  <span className="text-[7px] md:text-[9px] font-black text-white italic tracking-tighter">{item.badge}</span>
-                                </div>
-                              )}
-                              {/* Cinematic Animated Sweep */}
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1500" />
-                            </div>
-
-                            <div className="px-1 text-center">
-                              {item.label && (
-                                <span className="text-[7px] md:text-[10px] text-primary-brown font-black uppercase tracking-[0.2em] block mb-1 opacity-80">{item.label}</span>
-                              )}
-                              <h3 className="text-[10px] md:text-sm font-black text-white uppercase tracking-widest truncate mb-1 md:mb-2">{item.name}</h3>
-                              <div className="flex items-center justify-center gap-2 mb-3">
-                                <span className="text-xs md:text-base font-black text-primary-brown">₹{item.price}</span>
-                                {item.isPromo && <span className="text-[8px] md:text-[10px] text-white/30 line-through font-bold">₹89</span>}
-                              </div>
-                              
-                              <button 
-                                onClick={() => addToCart({
-                                  id: `hero-best-${i}`,
-                                  name: item.name,
-                                  price: Number(item.price),
-                                  branchName: "Coffee99",
-                                  branchId: "shivmandir",
-                                  image: item.img,
-                                })}
-                                className="w-full py-2 bg-primary-brown hover:bg-white text-white hover:text-black rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 shadow-lg active:scale-95"
-                              >
-                                Add
-                              </button>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    </div>
-                    
-                    <motion.p 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                      className="text-gray-400 mt-6 md:mt-12 text-[10px] font-black tracking-[0.4em] uppercase italic opacity-40"
+              <>
+                <h1 className="flex flex-col items-center font-serif text-white mb-8 md:mb-12 tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                  {slides[currentSlide].title.split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ 
+                        delay: i * 0.15, 
+                        duration: 0.8, 
+                        ease: [0.16, 1, 0.3, 1] 
+                      }}
+                      className={`${
+                        i === 0 
+                          ? 'text-5xl md:text-8xl font-bold mb-2 md:mb-4' 
+                          : 'text-4xl md:text-7xl italic text-primary-brown font-medium'
+                      }`}
                     >
-                      Premium Selections
-                    </motion.p>
-                  </div>
+                      {word}
+                    </motion.span>
+                  ))}
+                </h1>
+                <p className="text-lg md:text-xl text-gray-300 mb-10 md:mb-14 font-light tracking-wide max-w-2xl mx-auto drop-shadow-md">
+                  {slides[currentSlide].text.split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, filter: "blur(10px)" }}
+                      animate={{ opacity: 1, filter: "blur(0px)" }}
+                      transition={{ delay: 0.5 + i * 0.05, duration: 0.4 }}
+                      className="inline-block"
+                    >
+                      {word}&nbsp;
+                    </motion.span>
+                  ))}
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10 mb-12 md:mb-16 pointer-events-auto">
+                  <a 
+                    href="#locations" 
+                    className="w-full sm:w-auto px-10 py-4 bg-primary-brown text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-2xl shadow-primary-brown/40"
+                  >
+                    Find a Branch
+                  </a>
+                  <a 
+                    href="#reviews" 
+                    className="w-full sm:w-auto px-10 py-4 border-2 border-white text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                  >
+                    Reviews
+                  </a>
                 </div>
-              ) : (
-                <>
-                  <h1 className="flex flex-col items-center font-serif text-white mb-8 md:mb-12 tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-                    {slides[currentSlide].title.split(' ').map((word, i) => (
-                      <motion.span
-                        key={i}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                          delay: i * 0.15, 
-                          duration: 0.8, 
-                          ease: [0.16, 1, 0.3, 1] 
-                        }}
-                        className={`${
-                          i === 0 
-                            ? 'text-5xl md:text-8xl font-bold mb-2 md:mb-4' 
-                            : 'text-4xl md:text-7xl italic text-primary-brown font-medium'
-                        }`}
-                      >
-                        {word}
-                      </motion.span>
-                    ))}
-                  </h1>
-                  <p className="text-lg md:text-xl text-gray-300 mb-10 md:mb-14 font-light tracking-wide max-w-2xl mx-auto drop-shadow-md">
-                    {slides[currentSlide].text.split(' ').map((word, i) => (
-                      <motion.span
-                        key={i}
-                        initial={{ opacity: 0, filter: "blur(10px)" }}
-                        animate={{ opacity: 1, filter: "blur(0px)" }}
-                        transition={{ delay: 0.5 + i * 0.05, duration: 0.4 }}
-                        className="inline-block"
-                      >
-                        {word}&nbsp;
-                      </motion.span>
-                    ))}
-                  </p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10 mb-12 md:mb-16 pointer-events-auto">
-                    <a 
-                      href="#locations" 
-                      className="w-full sm:w-auto px-10 py-4 bg-primary-brown text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-2xl shadow-primary-brown/40"
-                    >
-                      Find a Branch
-                    </a>
-                    <a 
-                      href="#reviews" 
-                      className="w-full sm:w-auto px-10 py-4 border-2 border-white text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-                    >
-                      Reviews
-                    </a>
-                  </div>
-                </>
-              )}
+              </>
 
               {/* Navigation Dots - Centered and aligned below the button */}
               <div className="flex justify-center gap-4 pointer-events-auto">
