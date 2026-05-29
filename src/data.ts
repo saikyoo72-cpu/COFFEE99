@@ -334,32 +334,38 @@ export const testimonials = [
   {
     name: "Arjun Sharma",
     text: "The best espresso in Siliguri! The atmosphere is perfect for getting some work done or just relaxing.",
-    rating: 5
+    rating: 5,
+    branchId: "shivmandir"
   },
   {
     name: "Priya Patel",
     text: "Love the neighborhood vibe here. Their cold brew is my daily essential. Highly recommended!",
-    rating: 5
+    rating: 5,
+    branchId: "hakimpara"
   },
   {
     name: "Rohan Gupta",
     text: "A hidden gem! The staff is so friendly and the pastries are always fresh and delicious.",
-    rating: 4
+    rating: 4,
+    branchId: "shalbari"
   },
   {
     name: "Ananya Iyer",
     text: "I visit the Shivmandir branch often. The coffee is consistently great and the service is top-notch.",
-    rating: 5
+    rating: 5,
+    branchId: "shivmandir"
   },
   {
     name: "Vikram Singh",
     text: "Great place to hang out with friends. The Peri Peri fries are a must-try!",
-    rating: 5
+    rating: 5,
+    branchId: "bara-mohansingh"
   },
   {
     name: "Ishita Mehra",
     text: "The combos are a great deal. Love the Burger + Cold Coffee combo. Perfect for a quick lunch.",
-    rating: 4
+    rating: 4,
+    branchId: "ashram-para"
   }
 ];
 

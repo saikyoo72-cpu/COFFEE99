@@ -34,57 +34,75 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-black text-white pt-20 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+    <footer className="bg-[#050505] text-white pt-32 pb-16 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
           {/* Brand */}
-          <div className="space-y-6">
-            <div className="flex items-center space-x-3">
-              <Logo storeName={settings?.store_name} className="h-10 w-auto" />
-            </div>
-            <p className="text-gray-400 font-light leading-relaxed">
-              {settings?.store_address || "Your neighborhood cafe serving handcrafted coffee and fresh bites since 2015. Experience the perfect blend of comfort and quality."}
+          <div className="space-y-8">
+            <Logo storeName={settings?.store_name} className="h-12 w-auto" />
+            <p className="text-gray-500 font-light leading-relaxed text-sm">
+              {settings?.store_description || "Coffee99 is more than just a cafe; it's a culture of bold flavors and edgy vibes. Born in Siliguri, dedicated to the worldwide coffee squad."}
             </p>
-            <div className="flex space-x-4">
-              <a 
-                href="https://www.instagram.com/coffee99shivmandir/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="p-2 bg-latte-beige hover:bg-primary-brown hover:text-white rounded-lg transition-all"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a 
-                href="https://www.facebook.com/shivmandircoffee99/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="p-2 bg-latte-beige hover:bg-primary-brown hover:text-white rounded-lg transition-all"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
+            <div className="flex space-x-6">
+              {[
+                { icon: Instagram, href: "https://www.instagram.com/coffee99shivmandir/" },
+                { icon: Facebook, href: "https://www.facebook.com/shivmandircoffee99/" },
+              ].map((social, i) => (
+                <a 
+                  key={i}
+                  href={social.href} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-10 h-10 glass rounded-full flex items-center justify-center text-gray-400 hover:bg-primary-brown hover:text-white hover:scale-110 transition-all duration-500"
+                >
+                  <social.icon className="h-5 w-5" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-6">
-            <h4 className="text-xl font-serif font-bold text-primary-brown">Quick Links</h4>
-            <ul className="space-y-4">
-              <li><Link to="/blogs" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Our Blogs</Link></li>
-              <li><Link to="/#locations" className="text-gray-400 font-light hover:text-primary-brown transition-colors">Locations</Link></li>
+          {/* Connect */}
+          <div className="space-y-8">
+            <h4 className="text-[10px] font-black text-primary-brown uppercase tracking-[0.4em]">The Menu</h4>
+            <ul className="space-y-5">
+              <li><Link to="/blogs" className="text-gray-400 font-light text-sm hover:text-primary-brown transition-colors">Stories & Reels</Link></li>
+              <li><Link to="/creator-program" className="text-gray-400 font-light text-sm hover:text-primary-brown transition-colors">Join Creators</Link></li>
+              <li><Link to="/#locations" className="text-gray-400 font-light text-sm hover:text-primary-brown transition-colors">Our Hubs</Link></li>
             </ul>
           </div>
 
-          <div className="space-y-6">
-            <ul className="space-y-4 text-gray-400 font-light">
-              <li className="flex items-center gap-2 pt-2">
-                <span className="font-black text-white text-lg uppercase tracking-wider">Designed by The Aspirion</span>
-              </li>
-            </ul>
+          {/* Hubs */}
+          <div className="space-y-8">
+            <h4 className="text-[10px] font-black text-primary-brown uppercase tracking-[0.4em]">Official Hub</h4>
+            <div className="flex items-start gap-4">
+              <MapPin className="h-5 w-5 text-gray-600 mt-1" />
+              <p className="text-gray-500 font-light text-sm leading-relaxed">
+                Shivmandir, Siliguri<br/>
+                West Bengal, India
+              </p>
+            </div>
+          </div>
+
+          {/* Credits */}
+          <div className="space-y-8">
+            <h4 className="text-[10px] font-black text-primary-brown uppercase tracking-[0.4em]">Architects</h4>
+            <p className="text-gray-500 font-light text-sm italic">
+              Crafted with passion <br/> 
+              <span className="text-white font-black uppercase tracking-widest text-[11px] not-italic">By saikyoo</span>
+            </p>
           </div>
         </div>
 
-        <div className="pt-10 border-t border-white/10 text-center text-gray-500 text-sm font-light">
-          <p>&copy; {new Date().getFullYear()} {settings?.store_name || "Coffee99"}. All rights reserved.</p>
+        <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-gray-600 text-[10px] font-medium uppercase tracking-[0.2em]">
+            &copy; {new Date().getFullYear()} {settings?.store_name || "Coffee99"} Group. No Limits.
+          </p>
+          <div className="flex gap-8 text-[10px] font-medium uppercase tracking-[0.2em] text-gray-600">
+            <span className="hover:text-primary-brown cursor-pointer transition-colors">Privacy</span>
+            <span className="hover:text-primary-brown cursor-pointer transition-colors">Terms</span>
+          </div>
         </div>
       </div>
     </footer>

@@ -7,66 +7,63 @@ const slides = [
   {
     id: 1,
     image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1920',
-    label: 'FOR CREATORS 🎥',
-    title: 'Join Our Squad',
-    subtitle: 'Are you a content creator? Collaborate with Coffee99, get featured, and grow with us.',
+    label: 'COLLABORATE 🎥',
+    title: 'Join Our Community',
+    subtitle: 'Are you a content creator? Collaborate with Coffee99, get featured, and grow with our community.',
     buttonText: 'Join Now',
     link: '/creator-program'
   },
   {
     id: 2,
     image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=1920',
-    label: 'Hot Picks 🔥',
-    title: 'New Hot Items 🔥',
-    subtitle: 'Try our latest hot and trending items, freshly made and full of flavor.',
+    label: 'TRENDING 🔥',
+    title: 'Season\'s Hot Picks',
+    subtitle: 'Discover our latest trending items, handcrafted for bold flavors.',
     buttonText: 'Order Now',
     link: '/hot-items'
   },
   {
     id: 3,
     image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1920',
-    label: 'CREATORS 🎬',
-    title: 'Creators Page',
-    subtitle: 'Watch our latest videos, behind-the-scenes moments, and coffee stories.',
+    label: 'STORIES 🎬',
+    title: 'Creator Spotlight',
+    subtitle: 'Explore behind-the-scenes stories and watch our latest community features.',
     buttonText: 'Watch Now',
     link: '/blogs'
   },
   {
     id: 4,
     image: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&q=80&w=1920',
-    label: 'Starting at ₹49 Only ✨',
-    title: 'Bestseller Items',
-    subtitle: 'Burger starts from ₹49 only! Taste the legends of Coffee99.',
+    label: 'VALUE MENU ✨',
+    title: 'Our Bestsellers',
+    subtitle: 'Legendary flavors starting from ₹49. Perfect for any craving.',
     buttonText: 'Explore Now',
     link: '/bestsellers'
   }
 ];
 
-function Sparkle({ delay = 0 }: { delay?: number }) {
+function FadeGlow({ color = "#D00000", delay = 0 }: { color?: string, delay?: number }) {
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
+      initial={{ opacity: 0 }}
       animate={{ 
-        scale: [0, 1.5, 0.8, 1.2, 0],
-        opacity: [0, 1, 0.8, 1, 0],
-        y: [0, -150],
-        x: [0, (Math.random() - 0.5) * 150],
-        rotate: [0, 180, 360]
+        opacity: [0, 0.3, 0],
       }}
       transition={{ 
-        duration: 4, 
+        duration: 10, 
         repeat: Infinity, 
         delay,
-        ease: "easeInOut" 
+        ease: "linear" 
       }}
-      className="absolute text-yellow-300 text-2xl pointer-events-none drop-shadow-[0_0_8px_rgba(253,224,71,0.6)]"
+      className="absolute blur-[80px] rounded-full pointer-events-none gpu"
       style={{
+        backgroundColor: color,
+        width: '250px',
+        height: '250px',
         left: `${Math.random() * 100}%`,
-        bottom: '-20px'
+        top: `${Math.random() * 100}%`,
       }}
-    >
-      ✨
-    </motion.div>
+    />
   );
 }
 
@@ -86,142 +83,107 @@ export default function PromotionalCarousel() {
   }, []);
 
   useEffect(() => {
-    if (isPaused) {
-      const resumeTimer = setTimeout(() => setIsPaused(false), 5000);
-      return () => clearTimeout(resumeTimer);
-    }
-  }, [isPaused]);
-
-  useEffect(() => {
     if (isPaused) return;
-    const timer = setInterval(nextSlide, 3000); // Slower for a more professional feel
+    const timer = setInterval(nextSlide, 7000); 
     return () => clearInterval(timer);
   }, [isPaused, nextSlide]);
 
-  const handleDragEnd = (event: any, info: any) => {
-    const swipeThreshold = 50;
-    if (info.offset.x < -swipeThreshold) {
-      nextSlide();
-    } else if (info.offset.x > swipeThreshold) {
-      prevSlide();
-    }
-  };
-
   const variants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0
+      x: direction > 0 ? '5%' : '-5%',
+      opacity: 0,
     }),
     center: {
       x: 0,
-      opacity: 1
+      opacity: 1,
     },
     exit: (direction: number) => ({
-      x: direction < 0 ? '100%' : '-100%',
-      opacity: 0
+      x: direction < 0 ? '5%' : '-5%',
+      opacity: 0,
     })
   };
 
   return (
     <div 
-      className="relative w-full pt-20 bg-[#050505] overflow-hidden"
+      className="relative w-full pt-16 bg-black overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background Celebration Particles */}
-      <div className="absolute inset-x-0 bottom-0 h-40 pointer-events-none z-10">
-        {[...Array(12)].map((_, i) => (
-          <Sparkle key={i} delay={i * 0.3} />
-        ))}
+      <div className="absolute inset-0 z-0 opacity-20 flex justify-around overflow-hidden pointer-events-none">
+        <FadeGlow color="#D00000" delay={0} />
+        <FadeGlow color="#00BB9F" delay={4} />
       </div>
 
-      {/* Decorative Celebration Gradients */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[150%] bg-primary-brown blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[150%] bg-purple-600 blur-[150px] rounded-full animate-pulse" />
-      </div>
-
-      <div className="relative h-[200px] md:h-[260px] overflow-hidden shadow-xl shadow-black/20">
+      <div className="relative h-[180px] md:h-[240px] overflow-hidden border-b border-white/5">
         <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 180, damping: 25 },
-              opacity: { duration: 0.5 }
-            }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={1}
-            onDragStart={() => setIsPaused(true)}
-            onDragEnd={handleDragEnd}
-            className="absolute inset-0 cursor-pointer"
-          >
-            <Link to={slides[currentIndex].link} className="absolute inset-0 z-30" />
-            <div 
-              className="absolute inset-0 bg-center bg-cover"
-              style={{ 
-                backgroundImage: `url(${slides[currentIndex].image})`,
-                filter: 'brightness(0.6) contrast(1.1)'
+            <motion.div
+              key={currentIndex}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { duration: 0.6, ease: "easeOut" },
+                opacity: { duration: 0.4 },
               }}
+              className="absolute inset-0 gpu"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-            </div>
-            
-            <div className="relative h-full flex items-center px-6 md:px-16 lg:px-24">
-              <motion.div
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.6 }}
-                className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6"
+              <Link to={slides[currentIndex].link} className="absolute inset-0 z-30" />
+              <div 
+                className="absolute inset-0 bg-center bg-cover transition-transform duration-[2000ms] scale-105"
+                style={{ 
+                  backgroundImage: `url(${(() => {
+                    const imgUrl = slides[currentIndex].image;
+                    const baseUrl = imgUrl.split('?')[0];
+                    return `${baseUrl}?auto=format&fm=webp&fit=crop&w=1000&q=60`;
+                  })()})`,
+                }}
               >
-                <div>
-                  <span className="inline-block px-3 py-0.5 bg-primary-brown text-white text-[8px] md:text-[9px] font-black uppercase tracking-[0.3em] rounded-full border border-primary-brown/30">
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+              </div>
+            
+            <div className="relative h-full flex items-center px-8 md:px-24">
+              <div className="max-w-2xl">
+                <motion.div
+                  initial={{ x: -10, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex flex-col gap-4"
+                >
+                  <span className="w-fit px-4 py-1.5 glass-dark text-white text-[9px] font-black uppercase tracking-[0.4em] rounded-full">
                     {slides[currentIndex].label}
                   </span>
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl md:text-3xl font-serif font-bold text-white leading-none tracking-tight">
+                  <div>
+                    <h2 className="text-3xl md:text-5xl font-serif font-black text-white leading-tight mb-2">
                       {slides[currentIndex].title}
                     </h2>
-                    <div className="hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white group-hover:bg-primary-brown transition-colors">
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
+                    <p className="text-gray-400 text-xs md:text-sm font-light max-w-lg hidden md:block">
+                      {slides[currentIndex].subtitle}
+                    </p>
                   </div>
-                  {slides[currentIndex].id === 4 && (
-                    <motion.p 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-[10px] md:text-xs text-primary-brown font-black uppercase tracking-[0.2em] mt-1"
-                    >
-                      Burger starting at ₹49 only
-                    </motion.p>
-                  )}
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>
 
-        {/* Minimalist Navigation Dots */}
-        <div className="absolute bottom-3 right-8 flex gap-1.5 z-10">
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setDirection(index > currentIndex ? 1 : -1);
-                setCurrentIndex(index);
-              }}
-              className={`h-1 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'bg-primary-brown w-6' : 'bg-white/20 hover:bg-white/40'
-              }`}
-            />
-          ))}
+        {/* Minimalist Controls */}
+        <div className="absolute bottom-6 right-8 flex items-center gap-6 z-40">
+          <div className="flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setDirection(index > currentIndex ? 1 : -1);
+                  setCurrentIndex(index);
+                }}
+                className={`h-[2px] transition-all duration-500 ${
+                  index === currentIndex ? 'bg-primary-brown w-10' : 'bg-white/10 w-4 hover:bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

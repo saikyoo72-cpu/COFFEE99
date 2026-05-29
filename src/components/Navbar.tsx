@@ -64,26 +64,36 @@ export default function Navbar() {
   return (
     <>
       <nav 
-        className={`fixed w-full z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-cream-bg/90 backdrop-blur-md py-3 shadow-lg' : 'bg-transparent py-5'
+        className={`fixed w-full z-50 transition-all duration-500 ${
+          isScrolled ? 'bg-black/80 backdrop-blur-xl py-3 border-b border-white/5 shadow-2xl' : 'bg-transparent py-6'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center group">
-              <Logo storeName={storeName} className="h-10 w-auto group-hover:scale-105 transition-transform duration-300" />
+            <Link to="/" className="flex items-center group relative">
+              <Logo storeName={storeName} className="h-10 md:h-12 w-auto transition-all duration-500 group-hover:scale-105" />
+              {isScrolled && (
+                <motion.div 
+                  layoutId="logo-glow"
+                  className="absolute -inset-2 bg-primary-brown/10 blur-xl rounded-full -z-10"
+                />
+              )}
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-10">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className="relative text-dark-roast font-medium text-sm uppercase tracking-widest group"
+                  className="relative text-white font-semibold text-[11px] uppercase tracking-[0.3em] group"
                 >
-                  {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-caramel transition-all duration-300 group-hover:w-full"></span>
+                  <span className="relative z-10 transition-colors duration-300 group-hover:text-primary-brown">
+                    {link.name}
+                  </span>
+                  <motion.span 
+                    className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary-brown transition-all duration-300 group-hover:w-full"
+                  />
                 </Link>
               ))}
               
@@ -97,25 +107,25 @@ export default function Navbar() {
                   </div>
                   <button
                     onClick={() => signOut()}
-                    className="p-2 hover:bg-red-500/10 rounded-full transition-colors text-red-500"
+                    className="p-2.5 bg-white/5 hover:bg-primary-brown/10 rounded-full border border-white/10 transition-all duration-300 text-red-500/80 hover:text-red-500"
                     title="Sign Out"
                   >
                     <LogOut className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-6">
                   <button
                     onClick={() => openAuth('login')}
-                    className="px-5 py-2 text-dark-roast text-xs font-bold uppercase tracking-widest hover:text-primary-brown transition-colors"
+                    className="text-white text-[11px] font-bold uppercase tracking-[0.2em] hover:text-primary-brown transition-colors"
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => openAuth('signup')}
-                    className="px-6 py-2.5 bg-primary-brown text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-lg shadow-primary-brown/20"
+                    className="px-8 py-3 bg-primary-brown text-white rounded-full text-[11px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(208,0,0,0.3)] hover:shadow-white/20"
                   >
-                    Sign Up
+                    Join Squad
                   </button>
                 </div>
               )}

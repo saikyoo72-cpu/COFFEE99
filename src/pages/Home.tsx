@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import { 
   ArrowRight, 
   Coffee, 
@@ -13,237 +13,340 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { branches, testimonials } from '../data';
-import { slides } from '../heroSlider';
 import { useCart } from '../context/CartContext';
 import PromotionalCarousel from '../components/PromotionalCarousel';
+import { slides } from '../heroSlider';
 
 import { useReviews } from '../context/ReviewContext';
+import Typewriter from '../components/Typewriter';
+
+import SEO from '../components/SEO';
 
 export default function Home() {
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { reviews, addReview } = useReviews();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const masterpiecesRef = useRef<HTMLDivElement>(null);
+  const combosRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Preload hero images for faster transitions
-    slides.forEach((slide) => {
-      const img = new Image();
-      img.src = slide.img;
+  const handleMasterpieceScroll = (direction: 'left' | 'right') => {
+    const el = masterpiecesRef.current;
+    if (!el) return;
+    const scrollAmount = el.clientWidth > 768 ? 300 : 220;
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
     });
-
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 10000);
-    return () => clearInterval(timer);
-  }, [currentSlide]);
-
-  const goToSlide = (index: number) => {
-    setDirection(index > currentSlide ? 1 : -1);
-    setCurrentSlide(index);
   };
 
-  const handleDragEnd = (_: any, info: any) => {
-    const swipeThreshold = 50;
-    if (info.offset.x < -swipeThreshold) {
-      setDirection(1);
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    } else if (info.offset.x > swipeThreshold) {
-      setDirection(-1);
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    }
+  const handleComboScroll = (direction: 'left' | 'right') => {
+    const el = combosRef.current;
+    if (!el) return;
+    const scrollAmount = el.clientWidth > 768 ? 240 : 160;
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
   };
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 0,
-      scale: 1.1
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? '100%' : '-100%',
-      opacity: 0,
-      scale: 1.1
-    })
-  };
+  // Autoplay Masterpieces (Continuous Smooth Slow Drift)
+  useEffect(() => {
+    const el = masterpiecesRef.current;
+    if (!el) return;
+
+    let scroller: NodeJS.Timeout;
+    let isVisible = false;
+
+    const startDrifting = () => {
+      clearInterval(scroller);
+      scroller = setInterval(() => {
+        if (isVisible && !document.hidden && el.scrollWidth > el.clientWidth) {
+          const maxScroll = el.scrollWidth - el.clientWidth;
+          if (el.scrollLeft >= maxScroll - 1) {
+            el.scrollLeft = 0;
+          } else {
+            el.scrollLeft += 1;
+          }
+        }
+      }, 30); // Gentle cinematic drift speed, extremely smooth & consistent
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          startDrifting();
+        } else {
+          clearInterval(scroller);
+        }
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(scroller);
+      } else if (isVisible) {
+        startDrifting();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(scroller);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  // Autoplay Combos (Continuous Smooth Slow Drift)
+  useEffect(() => {
+    const el = combosRef.current;
+    if (!el) return;
+
+    let scroller: NodeJS.Timeout;
+    let isVisible = false;
+
+    const startDrifting = () => {
+      clearInterval(scroller);
+      scroller = setInterval(() => {
+        if (isVisible && !document.hidden && el.scrollWidth > el.clientWidth) {
+          const maxScroll = el.scrollWidth - el.clientWidth;
+          if (el.scrollLeft >= maxScroll - 1) {
+            el.scrollLeft = 0;
+          } else {
+            el.scrollLeft += 1;
+          }
+        }
+      }, 30); // Gentle cinematic drift speed, extremely smooth & consistent
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          startDrifting();
+        } else {
+          clearInterval(scroller);
+        }
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(scroller);
+      } else if (isVisible) {
+        startDrifting();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(scroller);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
 
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [newReview, setNewReview] = useState({ name: '', text: '', rating: 5 });
+  const [newReview, setNewReview] = useState({ name: '', text: '', rating: 5, branchId: 'shivmandir' });
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState('all');
+
+  const optimizeImage = (url: string, width: number = 500, quality: number = 70) => {
+    if (!url) return '';
+    if (url.includes('images.unsplash.com')) {
+      // Clean base url by dropping any existing query arguments so we can perfectly control sizing
+      const baseUrl = url.split('?')[0];
+      return `${baseUrl}?auto=format&fm=webp&fit=crop&w=${width}&q=${quality}`;
+    }
+    return url;
+  };
+
+  const filteredReviews = selectedBranchFilter === 'all'
+    ? reviews
+    : reviews.filter(r => r.branchId === selectedBranchFilter);
 
   useEffect(() => {
+    if (filteredReviews.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % reviews.length);
+      setCurrentTestimonial((prev) => (prev + 1) % filteredReviews.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [reviews.length]);
+  }, [filteredReviews.length]);
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (newReview.name && newReview.text) {
-      addReview(newReview);
-      setNewReview({ name: '', text: '', rating: 5 });
+      addReview({
+        name: newReview.name,
+        text: newReview.text,
+        rating: newReview.rating,
+        branchId: newReview.branchId
+      });
+      setNewReview({ name: '', text: '', rating: 5, branchId: 'shivmandir' });
       setShowReviewForm(false);
-      // Switch to the new review (which will be at the end of the array)
+      setSelectedBranchFilter('all');
       setCurrentTestimonial(reviews.length);
     }
   };
 
-  const currentReview = reviews[currentTestimonial] || reviews[0];
+  const currentReview = filteredReviews[currentTestimonial] || filteredReviews[0] || reviews[0];
 
   return (
     <div className="overflow-x-hidden">
+      <SEO 
+        title="Coffee99 | Best Coffee, Burgers & Vibes in Siliguri" 
+        description="Experience the cinematic vibe at Coffee99. Your one-stop destination for artisanal coffee, slaying burgers, and late-night squad memories."
+      />
       <PromotionalCarousel />
 
-      {/* 2. HERO SECTION */}
-      <section className="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden cursor-grab select-none">
-        {/* Background Slider & Drag Area */}
-        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
-          <motion.div
-            className="relative h-full w-full"
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.5}
-            onDragEnd={handleDragEnd}
+      {/* 2. HERO SECTION - Optimized for Speed with Video Background */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+        {/* Cinematic Video Background - GPU Accelerated */}
+        <div className="absolute inset-0 z-0 gpu">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover opacity-85"
+            poster={optimizeImage(slides[0].img, 800, 60)}
           >
-            {slides.map((slide, index) => (
-              <div 
-                key={index}
-                className="w-screen h-full relative flex-shrink-0 transition-opacity duration-700"
-                style={{
-                  opacity: currentSlide === index ? 1 : 0,
-                  position: 'absolute',
-                  left: 0,
-                  top: 0
-                }}
-              >
-                <img 
-                  src={slide.img} 
-                  alt={slide.title} 
-                  className="w-full h-full object-cover pointer-events-none"
-                  referrerPolicy="no-referrer"
-                  loading={index === currentSlide ? "eager" : "lazy"}
-                />
-                <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none"></div>
-              </div>
-            ))}
-          </motion.div>
+            <source src="https://files.catbox.moe/9fdq9c.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/75" />
         </div>
 
-        <div className="relative z-20 text-center w-full flex flex-col items-center justify-start h-full pointer-events-none pt-16 md:pt-20">
-          <AnimatePresence mode="wait">
+        {/* Ambient Light Effects - Simplified for performance */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-30">
+          <div className="absolute top-1/4 -left-1/4 w-[400px] h-[400px] bg-primary-brown/10 blur-[80px] rounded-full" />
+          <div className="absolute bottom-1/4 -right-1/4 w-[300px] h-[300px] bg-brand-cyan/5 blur-[80px] rounded-full" />
+        </div>
+
+        <div className="relative z-20 container mx-auto px-6 h-full flex flex-col justify-center pt-24">
+          <div className="max-w-5xl mx-auto text-center">
             <motion.div
-              key={currentSlide}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="max-w-5xl mx-auto px-4 w-full"
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <>
-                <h1 className="flex flex-col items-center font-serif text-white mb-8 md:mb-12 tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-                  {slides[currentSlide].title.split(' ').map((word, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ 
-                        delay: i * 0.15, 
-                        duration: 0.8, 
-                        ease: [0.16, 1, 0.3, 1] 
-                      }}
-                      className={`${
-                        i === 0 
-                          ? 'text-5xl md:text-8xl font-bold mb-2 md:mb-4' 
-                          : 'text-4xl md:text-7xl italic text-primary-brown font-medium'
-                      }`}
-                    >
-                      {word}
-                    </motion.span>
-                  ))}
-                </h1>
-                <p className="text-lg md:text-xl text-gray-300 mb-10 md:mb-14 font-light tracking-wide max-w-2xl mx-auto drop-shadow-md">
-                  {slides[currentSlide].text.split(' ').map((word, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, filter: "blur(10px)" }}
-                      animate={{ opacity: 1, filter: "blur(0px)" }}
-                      transition={{ delay: 0.5 + i * 0.05, duration: 0.4 }}
-                      className="inline-block"
-                    >
-                      {word}&nbsp;
-                    </motion.span>
-                  ))}
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10 mb-12 md:mb-16 pointer-events-auto">
-                  <a 
-                    href="#locations" 
-                    className="w-full sm:w-auto px-10 py-4 bg-primary-brown text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-2xl shadow-primary-brown/40"
-                  >
-                    Find a Branch
-                  </a>
-                  <a 
-                    href="#reviews" 
-                    className="w-full sm:w-auto px-10 py-4 border-2 border-white text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-                  >
-                    Reviews
-                  </a>
-                </div>
-              </>
-
-              {/* Navigation Dots - Centered and aligned below the button */}
-              <div className="flex justify-center gap-4 pointer-events-auto">
-                {slides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                      index === currentSlide 
-                        ? 'bg-primary-brown w-10' 
-                        : 'bg-white/30 hover:bg-white/60'
-                    }`}
-                    aria-label={`Go to slide ${index + 1}`}
-                  />
-                ))}
-              </div>
+              <span className="text-primary-brown font-black text-[10px] md:text-xs uppercase tracking-[0.6em] mb-6 block">
+                Welcome to the Squad
+              </span>
+              <h1 className="text-5xl md:text-8xl lg:text-9xl font-serif text-white mb-6 leading-none tracking-tight select-none">
+                <Typewriter 
+                  text="Handmade"
+                  delay={0.2}
+                  className="block text-white"
+                  doneClassName="text-transparent"
+                  doneStyle={{ WebkitTextStroke: '1px rgba(255, 255, 255, 0.45)' }}
+                />
+                <Typewriter 
+                  text="Craft"
+                  delay={1.5}
+                  className="italic text-primary-brown block"
+                  doneClassName="text-transparent"
+                  doneStyle={{ WebkitTextStroke: '1px rgba(139, 90, 43, 0.6)' }}
+                />
+              </h1>
             </motion.div>
-          </AnimatePresence>
+            
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.2, duration: 0.6 }}
+              className="text-sm md:text-lg text-gray-300 mb-8 font-light tracking-wide max-w-xl mx-auto leading-relaxed border-l border-primary-brown/30 pl-6 md:pl-10 text-center"
+            >
+              {slides[0].text}
+            </motion.p>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.8, duration: 0.6 }}
+              className="flex flex-row items-center justify-center gap-3 md:gap-4 max-w-sm sm:max-w-md mx-auto"
+            >
+              <a 
+                href="#locations" 
+                className="group relative px-5 py-2.5 md:px-7 md:py-3.5 bg-primary-brown text-white rounded-full font-black text-[9px] md:text-xs uppercase tracking-[0.2em] transition-all hover:bg-primary-brown/95 active:scale-95 shadow-lg shadow-primary-brown/10 shrink-0 text-center cursor-pointer"
+              >
+                Find a Branch
+              </a>
+              <a 
+                href="#reviews" 
+                className="group relative px-5 py-2.5 md:px-7 md:py-3.5 border border-white/10 hover:border-white/30 text-white/80 hover:text-white rounded-full font-black text-[9px] md:text-xs uppercase tracking-[0.2em] transition-all backdrop-blur-md bg-white/5 active:scale-95 shrink-0 text-center cursor-pointer"
+              >
+                Reviews
+              </a>
+            </motion.div>
+          </div>
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div 
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        >
+          <span className="text-[9px] uppercase tracking-[0.4em] text-white/40">Scroll</span>
+          <div className="w-[1px] h-12 bg-gradient-to-b from-primary-brown to-transparent" />
+        </motion.div>
       </section>
 
-      {/* 3. BEST PICKS SECTION */}
-      <section className="py-12 md:py-20 bg-[#050505] overflow-hidden">
+      {/* 3. BEST PICKS SECTION - Optimized & Compact */}
+      <section className="py-8 bg-[#050505] overflow-hidden relative">
+        <div className="absolute top-0 left-1/4 w-40 h-40 bg-primary-brown/5 blur-[80px] rounded-full pointer-events-none" />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10 md:mb-16"
-          >
-            <span className="text-primary-brown font-bold text-[10px] md:text-sm uppercase tracking-[0.4em] mb-3 block">Curated Selection</span>
-            <h2 className="text-3xl md:text-6xl font-serif text-white leading-tight">Our Best <span className="italic text-primary-brown">Picks in Taste</span></h2>
-          </motion.div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-5 gap-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.1 }}
+              className="text-left"
+            >
+              <span className="text-primary-brown font-black text-[9px] uppercase tracking-[0.4em] mb-2 block">Squad Picks</span>
+              <h2 className="text-3xl md:text-5xl font-serif text-white tracking-tight">
+                Selected <span className="italic text-primary-brown">Masterpieces</span>
+              </h2>
+            </motion.div>
+            
+            {/* Elegant Cinematic Controls */}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => handleMasterpieceScroll('left')}
+                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-300 active:scale-95 bg-white/5 cursor-pointer"
+                aria-label="Previous Masterpiece"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={() => handleMasterpieceScroll('right')}
+                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-300 active:scale-95 bg-white/5 cursor-pointer"
+                aria-label="Next Masterpiece"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
 
           <div className="relative">
-            <motion.div 
-              drag="x"
-              dragConstraints={{ right: 0, left: -1400 }}
-              dragTransition={{ bounceStiffness: 600, bounceDamping: 35 }}
-              className="flex gap-4 md:gap-8 cursor-grab active:cursor-grabbing px-2 py-4"
+            <div 
+              ref={masterpiecesRef}
+              className="flex gap-4 md:gap-8 overflow-x-auto no-scrollbar px-2 py-2"
             >
               {[
                 { 
                   name: "Loaded French Fries", 
                   price: 90, 
                   image: "https://i.ibb.co/JjPpxCTY/unnamed.jpg",
-                  desc: "Crispy golden fries smothered in molten cheese and signature spices.",
+                  desc: "Crispy golden fries smothered in molten cheese.",
                   tag: "🔥 BESTSELLER"
                 },
                 { 
@@ -264,62 +367,91 @@ export default function Home() {
                   name: "Hot Brownie", 
                   price: 99, 
                   image: "https://i.ibb.co/7dfLj61B/unnamed.jpg",
-                  desc: "Decadent chocolate brownie served warm for ultimate indulgence.",
+                  desc: "Indulgent brownie served warm.",
                   tag: "🍰 DESSERT"
                 },
                 { 
-                  name: "Zinger Burger", 
-                  price: 139, 
-                  image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400",
-                  desc: "A crispy chicken zinger patty with fresh lettuce and spicy mayo.",
-                  tag: "🍔 SPICY"
+                  name: "Paneer Tikka Roll", 
+                  price: 110, 
+                  image: "https://images.unsplash.com/photo-1626132647523-66f5bf380027?auto=format&fit=crop&q=80&w=400",
+                  desc: "Spiced paneer wrap with fresh chutney.",
+                  tag: "🌯 TASTY ROLL"
                 },
                 { 
-                  name: "Peri Peri Fries", 
-                  price: 119, 
-                  image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400",
-                  desc: "Classic fries tossed in a fiery peri-peri seasoning.",
-                  tag: "🍟 FLAVORFUL"
+                  name: "Hazelnut Cold Coffee", 
+                  price: 130, 
+                  image: "https://images.unsplash.com/photo-1461023058043-07fc21e3543d?auto=format&fit=crop&q=80&w=400",
+                  desc: "Rich espresso with premium hazelnut syrup.",
+                  tag: "☕ REFRESHING"
                 },
                 { 
-                  name: "Chicken Chips (Triangles)", 
-                  price: 109, 
-                  image: "https://i.ibb.co/7R2Y1wXk/unnamed.jpg",
-                  desc: "Delicious triangular chicken chips, crispy on the outside.",
-                  tag: "⚡ NEW"
+                  name: "Loaded Nachos", 
+                  price: 140, 
+                  image: "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?auto=format&fit=crop&q=80&w=400",
+                  desc: "Crispy nachos with salsa, sour cream, and cheese.",
+                  tag: "🌮 MEXICAN WOW"
+                },
+                { 
+                  name: "Red Velvet Waffle", 
+                  price: 110, 
+                  image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&q=80&w=400",
+                  desc: "Fresh red velvet waffle topped with white chocolate.",
+                  tag: "🧇 INDULGENT"
+                },
+                { 
+                  name: "Crispy Veg Nuggets", 
+                  price: 85, 
+                  image: "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?auto=format&fit=crop&q=80&w=400",
+                  desc: "Crunchy golden nuggets served with tasty dip.",
+                  tag: "🍟 BITE-SIZE"
+                },
+                { 
+                  name: "KitKat Premium Shake", 
+                  price: 130, 
+                  image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=400",
+                  desc: "Creamy chocolate shake blended with KitKat bar bits.",
+                  tag: "🥤 DOUBLE CHOCO"
                 },
               ].map((item, idx) => (
-                <motion.div
+                <div
                   key={idx}
-                  className="min-w-[260px] md:min-w-[320px] bg-[#0c0c0c] rounded-[30px] md:rounded-[40px] overflow-hidden border border-white/5 shadow-2xl transition-all duration-500 group relative"
-                  whileHover={{ y: -8 }}
+                  className="min-w-[145px] sm:min-w-[170px] md:min-w-[220px] snap-start snap-always shrink-0 bg-[#0c0c0c] rounded-2xl overflow-hidden border border-white/10 transition-all duration-300 group flex flex-col justify-between hover:border-primary-brown/40"
                 >
-                  <div className="h-44 md:h-56 overflow-hidden relative">
+                  <div className="h-20 sm:h-28 md:h-32 overflow-hidden relative">
                     <img 
-                      src={item.image} 
+                      src={optimizeImage(item.image, 300, 60)} 
                       alt={item.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c] to-transparent opacity-40" />
+                    <div className="absolute inset-0 bg-black/30" />
                     
-                    {/* Category Tag */}
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-primary-brown/90 backdrop-blur-md rounded-full border border-white/10 shadow-lg">
-                      <span className="text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/90 rounded border border-white/10">
+                      <span className="text-[6.5px] sm:text-[8px] font-black text-primary-brown uppercase tracking-wider">
                         {item.tag}
                       </span>
                     </div>
 
-                    {/* Price Tag */}
-                    <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
-                      <span className="text-[10px] font-bold text-white tracking-widest uppercase">₹{item.price}</span>
+                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 bg-black/95 border border-primary-brown/30 rounded">
+                      <span className="text-[9px] sm:text-xs font-black text-primary-brown">
+                        ₹{item.price}
+                      </span>
                     </div>
                   </div>
-                  <div className="p-6 md:p-8">
-                    <h3 className="text-lg font-serif font-bold text-white mb-2 leading-tight">{item.name}</h3>
-                    <p className="text-gray-500 text-[11px] font-normal mb-6 line-clamp-2 leading-relaxed">
-                      {item.desc}
-                    </p>
+
+                  <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Bold, bright solid white title to be highly readable for anyone with glasses/power */}
+                      <h3 className="text-xs sm:text-sm font-bold text-white mb-0.5 leading-tight line-clamp-2 select-text font-sans">
+                        {item.name}
+                      </h3>
+                      {/* High-contrast lighter grey */}
+                      <p className="text-gray-300 text-[9px] sm:text-[11px] font-normal mb-2 leading-relaxed line-clamp-1">
+                        {item.desc}
+                      </p>
+                    </div>
+
                     <button 
                       onClick={() => addToCart({
                         id: `pick-${idx}`,
@@ -329,138 +461,384 @@ export default function Home() {
                         branchId: "shivmandir",
                         image: item.image,
                       })}
-                      className="w-full py-3 bg-white/5 hover:bg-primary-brown text-white rounded-full font-bold text-[9px] uppercase tracking-[0.25em] transition-all border border-white/10 flex items-center justify-center gap-2 group/btn"
+                      className="w-full py-1.5 bg-primary-brown hover:bg-primary-brown/95 text-white font-extrabold text-[8px] sm:text-[10px] uppercase tracking-wider transition-all rounded-lg flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-md"
                     >
-                      <ShoppingBag className="w-3 h-3 group-hover/btn:scale-110 transition-transform" />
-                      Add to Cart
+                      <ShoppingBag className="w-2.5 h-2.5 text-white" />
+                      Add to Squad
                     </button>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 6. CUSTOMER REVIEWS */}
-      <section id="reviews" className="py-4 md:py-6 bg-primary-brown overflow-hidden">
+      {/* 4. COMBOS SECTION - Optimized & Compact */}
+      <section className="py-8 bg-black overflow-hidden border-t border-white/5 relative">
+        <div className="absolute top-1/2 right-0 w-80 h-80 bg-brand-cyan/5 blur-[100px] rounded-full pointer-events-none -z-10" />
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-6 md:mb-8"
-          >
-            <span className="text-white/60 font-bold text-[10px] uppercase tracking-[0.3em] mb-1 block">Testimonials</span>
-            <h2 className="text-2xl md:text-3xl font-serif text-white">What Our <span className="italic text-black">Customers Say</span></h2>
-          </motion.div>
-
-          <div className="relative max-w-4xl mx-auto">
-            <div className="overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentTestimonial}
-                  initial={{ opacity: 0, x: 100, filter: "blur(10px)" }}
-                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, x: -100, filter: "blur(10px)" }}
-                  transition={{ duration: 0.6, ease: "circOut" }}
-                  className="text-center"
-                >
-                  <div className="flex justify-center gap-1 mb-2">
-                    {[...Array(currentReview?.rating || 5)].map((_, i) => (
-                      <Star key={i} className="h-3 w-3 fill-white text-white" />
-                    ))}
-                  </div>
-                  <p className="text-lg md:text-2xl font-serif italic text-white mb-4 leading-relaxed px-4">
-                    "{currentReview?.text}"
-                  </p>
-                  <h4 className="text-[10px] md:text-sm font-bold text-black uppercase tracking-widest">
-                    {currentReview?.name}
-                  </h4>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <div className="flex justify-center gap-3 mt-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-5 gap-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.1 }}
+              className="text-left"
+            >
+              <span className="text-brand-cyan font-black text-[9px] uppercase tracking-[0.4em] mb-2 block">Squad Deals</span>
+              <h2 className="text-3xl md:text-5xl font-serif text-white tracking-tight">
+                Slaying <span className="italic text-brand-cyan">Combos</span>
+              </h2>
+            </motion.div>
+            
+            {/* Elegant Cinematic Controls */}
+            <div className="flex items-center gap-3">
               <button 
-                onClick={() => setCurrentTestimonial((prev) => (prev - 1 + reviews.length) % reviews.length)}
-                className="p-2 rounded-full border border-white/50 text-white hover:bg-white hover:text-primary-brown transition-all"
+                onClick={() => handleComboScroll('left')}
+                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-brand-cyan hover:border-brand-cyan/40 transition-all duration-300 active:scale-95 bg-white/5 cursor-pointer"
+                aria-label="Previous Combo"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button 
-                onClick={() => setCurrentTestimonial((prev) => (prev + 1) % reviews.length)}
-                className="p-2 rounded-full border border-white/50 text-white hover:bg-white hover:text-primary-brown transition-all"
+                onClick={() => handleComboScroll('right')}
+                className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/50 hover:text-brand-cyan hover:border-brand-cyan/40 transition-all duration-300 active:scale-95 bg-white/5 cursor-pointer"
+                aria-label="Next Combo"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
+          </div>
 
-            {/* Review Submission Option */}
+          <div className="relative">
+            <div 
+              ref={combosRef}
+              className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar px-2 py-2"
+            >
+              {[
+                { 
+                  name: "Veg Burger + Fries + Coke", 
+                  price: 119, 
+                  image: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&q=80&w=600",
+                  desc: "The ultimate classic veg meal delight.",
+                  tag: "🍔 VEG MEAL"
+                },
+                { 
+                  name: "Chicken Burger + Fries + Coke", 
+                  price: 129, 
+                  image: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=600",
+                  desc: "Crispy chicken burger combo.",
+                  tag: "🍗 CHICKEN MEAL"
+                },
+                { 
+                  name: "Crispy Nuggets + Oreo Shake", 
+                  price: 189, 
+                  image: "https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&q=80&w=600",
+                  desc: "Chilled Oreo milkshake paired with hot crispy golden nuggets.",
+                  tag: "🍗 SQUAD DELICE"
+                },
+                { 
+                  name: "Paneer Wrap + Hot Brownie", 
+                  price: 189, 
+                  image: "https://images.unsplash.com/photo-1626700051175-6518c4793f4f?auto=format&fit=crop&q=80&w=600",
+                  desc: "Grilled wrap served with hot brownie.",
+                  tag: "🌯 SWEET & SPICY"
+                },
+                { 
+                  name: "Loaded Fries + Hazelnut Coffee", 
+                  price: 199, 
+                  image: "https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&q=80&w=600",
+                  desc: "Loaded cheesy fries and cold brew.",
+                  tag: "🍟 TWIN BEAT"
+                },
+                { 
+                  name: "Cheese Corn Sandwich + Peach Iced Tea", 
+                  price: 149, 
+                  image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&q=80&w=600",
+                  desc: "Melted cheese & sweet corn grilled sandwich with peach iced tea.",
+                  tag: "🥪 SQUAD FAVORITE"
+                },
+                { 
+                  name: "Club Sandwich + KitKat Shake", 
+                  price: 199, 
+                  image: "https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=600",
+                  desc: "Club sandwich with KitKat milkshake.",
+                  tag: "🥪 CLUB FEAST"
+                },
+                { 
+                  name: "Garlic Bread + Cappuccino", 
+                  price: 149, 
+                  image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=600",
+                  desc: "Cheesy garlic bread with hot cappuccino.",
+                  tag: "☕ REFRESH SPREAD"
+                },
+                { 
+                  name: "Crispy Momos + Virgin Mojito", 
+                  price: 159, 
+                  image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600",
+                  desc: "Crispy fried momos and lime cooler.",
+                  tag: "🥟 RETRO BLAST"
+                },
+                { 
+                  name: "Tandoori Grill Sandwich + Chai", 
+                  price: 129, 
+                  image: "https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&q=80&w=600",
+                  desc: "Smoky tandoori sandwich and tea.",
+                  tag: "☕ TEATIME DUO"
+                },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="min-w-[145px] sm:min-w-[170px] md:min-w-[220px] snap-start snap-always shrink-0 bg-[#0c0c0c] rounded-2xl overflow-hidden border border-white/10 transition-all duration-300 group flex flex-col justify-between hover:border-brand-cyan/40"
+                >
+                  <div className="h-20 sm:h-28 md:h-32 overflow-hidden relative">
+                    <img 
+                      src={optimizeImage(item.image, 300, 60)} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/30" />
+                    
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/90 rounded border border-white/10">
+                      <span className="text-[6.5px] sm:text-[8px] font-black text-brand-cyan uppercase tracking-wider">
+                        {item.tag}
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 bg-black/95 border border-brand-cyan/30 rounded">
+                      <span className="text-[9px] sm:text-xs font-black text-brand-cyan">
+                        ₹{item.price}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Bold, bright solid white title to be highly readable for anyone with glasses/power */}
+                      <h3 className="text-xs sm:text-sm font-bold text-white mb-0.5 leading-tight line-clamp-2 select-text font-sans">
+                        {item.name}
+                      </h3>
+                      {/* High-contrast lighter grey */}
+                      <p className="text-gray-300 text-[9px] sm:text-[11px] font-normal mb-2 leading-relaxed line-clamp-1">
+                        {item.desc}
+                      </p>
+                    </div>
+
+                    <button 
+                      onClick={() => addToCart({
+                        id: `combo-home-flat-${idx}`,
+                        name: item.name,
+                        price: item.price,
+                        branchName: "Coffee99",
+                        branchId: "shivmandir",
+                        image: item.image,
+                      })}
+                      className="w-full py-1.5 bg-brand-cyan hover:bg-brand-cyan/95 text-black font-extrabold text-[8px] sm:text-[10px] uppercase tracking-wider transition-all rounded-lg flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-md"
+                    >
+                      <ShoppingBag className="w-2.5 h-2.5 text-black" />
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. CUSTOMER REVIEWS - Cinematic Redesign */}
+      <section id="reviews" className="py-20 bg-[#080808] overflow-hidden relative">
+        {/* Cinematic Backdrop with Vignette and Bloom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-primary-brown/5 to-black pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent pointer-events-none" />
+        
+        {/* Soft Radial Bloom */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-brown/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-6"
+          >
+            <span className="text-primary-brown font-black text-[10px] uppercase tracking-[0.5em] mb-3 block">Squad Resonance</span>
+            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tighter col-title">
+              The <span className="italic text-primary-brown text-glow-red">Voices</span>
+            </h2>
+          </motion.div>
+
+          {/* Centered Branch Filter - Premium, Smaller & Compact Dropdown */}
+          <div className="flex flex-col items-center justify-center mb-10 select-branch-area">
+            <div className="relative inline-block">
+              <select
+                value={selectedBranchFilter}
+                onChange={(e) => {
+                  setSelectedBranchFilter(e.target.value);
+                  setCurrentTestimonial(0);
+                }}
+                className="appearance-none bg-[#111] hover:bg-[#161616] text-white/70 hover:text-white border border-white/10 rounded-full px-5 py-2.5 pr-9 text-[9px] uppercase tracking-widest font-black focus:outline-none focus:border-primary-brown/45 cursor-pointer transition-all duration-300 shadow-lg text-center"
+              >
+                <option value="all">📍 All Branches</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id} className="bg-black text-white">📍 {b.name}</option>
+                ))}
+              </select>
+              <div className="absolute top-1/2 right-3.5 -translate-y-1/2 pointer-events-none text-white/40 text-[6px]">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          <div className="relative max-w-4xl mx-auto">
+            <div className="overflow-hidden min-h-[360px] flex items-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${selectedBranchFilter}-${currentTestimonial}`}
+                  initial={{ opacity: 0, scale: 0.98, x: 20 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 1.02, x: -20 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full"
+                >
+                  <div className="glass-dark p-8 md:p-14 rounded-[50px] border-white/5 shadow-2xl relative overflow-hidden group/card">
+                    {/* Subtle internal atmospheric glow */}
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-brown/10 blur-[80px] rounded-full" />
+                    
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#1a1a1a] to-primary-brown/20 border border-white/10 flex items-center justify-center font-serif text-2xl italic text-primary-brown mb-5 shadow-inner shadow-black">
+                        {currentReview?.name ? currentReview.name.charAt(0) : "C"}
+                      </div>
+
+                      {currentReview?.branchId && (
+                        <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] uppercase tracking-widest font-black text-primary-brown mb-5">
+                          📍 {branches.find(b => b.id === currentReview.branchId)?.name || "Siliguri Squad"}
+                        </div>
+                      )}
+
+                      <div className="flex justify-center gap-1.5 mb-8">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`h-4 w-4 ${i < (currentReview?.rating || 5) ? 'fill-primary-brown text-primary-brown' : 'text-white/5'}`} />
+                        ))}
+                      </div>
+
+                      <blockquote className="text-lg md:text-2xl font-serif italic text-white/90 leading-snug text-center tracking-tight mb-10 max-w-2xl min-h-[80px] flex items-center justify-center">
+                        "{currentReview?.text || "No reviews found under this branch yet. Be the first to share your story!"}"
+                      </blockquote>
+
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-[1px] bg-primary-brown/40 mb-4" />
+                        <h4 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.5em] italic">
+                          {currentReview?.name || "Coffee99 Patron"}
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Navigation Controls - Sleek & Grounded */}
+            <div className="flex justify-center gap-8 mt-12">
+              <button 
+                onClick={() => setCurrentTestimonial((prev) => (filteredReviews.length ? (prev - 1 + filteredReviews.length) % filteredReviews.length : 0))}
+                className="group w-12 h-12 rounded-full border border-white/10 glass-dark flex items-center justify-center text-white/40 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-500 active:scale-90 cursor-pointer"
+              >
+                <ChevronLeft className="h-5 w-5 group-hover:-translate-x-0.5 transition-transform" />
+              </button>
+              <button 
+                onClick={() => setCurrentTestimonial((prev) => (filteredReviews.length ? (prev + 1) % filteredReviews.length : 0))}
+                className="group w-12 h-12 rounded-full border border-white/10 glass-dark flex items-center justify-center text-white/40 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-500 active:scale-90 cursor-pointer"
+              >
+                <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+
+            {/* Review Form Toggler - Premium Glass Style */}
             <div className="mt-16 text-center">
               {!showReviewForm ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={() => setShowReviewForm(true)}
-                  className="px-8 py-3 bg-black text-white rounded-full font-bold text-sm uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-xl"
+                  className="group relative px-10 py-4 glass-dark text-white border border-white/5 rounded-full font-black text-[9px] uppercase tracking-[0.4em] transition-all hover:border-primary-brown/30 hover:shadow-[0_0_20px_rgba(178,34,34,0.15)] active:scale-95 cursor-pointer"
                 >
-                  Leave a Review
-                </motion.button>
+                  <span className="relative z-10 group-hover:text-primary-brown transition-colors">Share Your Story</span>
+                </button>
               ) : (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/10 backdrop-blur-md p-8 rounded-[40px] border border-white/20 max-w-lg mx-auto"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-black/95 backdrop-blur-3xl p-8 md:p-12 rounded-[40px] border border-white/10 max-w-xl mx-auto shadow-2xl relative z-20"
                 >
-                  <h3 className="text-xl font-serif text-white mb-6">Share Your Experience</h3>
+                  <h3 className="text-xl md:text-2xl font-serif text-white mb-6 tracking-tight">Join the Vibe</h3>
                   <form onSubmit={handleSubmitReview} className="space-y-4">
-                    <div className="flex justify-center gap-2 mb-4">
+                    <div className="flex justify-center gap-3 mb-4">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setNewReview({ ...newReview, rating: star })}
-                          className="focus:outline-none"
+                          className="transition-transform hover:scale-110 active:scale-90"
                         >
                           <Star 
                             className={`h-6 w-6 transition-colors ${
-                              star <= newReview.rating ? 'fill-white text-white' : 'text-white/30'
+                              star <= newReview.rating ? 'fill-primary-brown text-primary-brown' : 'text-white/5'
                             }`} 
                           />
                         </button>
                       ))}
                     </div>
+
+                    <div className="flex flex-row items-center justify-center gap-2 bg-white/5 border border-white/10 rounded-[20px] px-4 py-2 mx-auto max-w-xs">
+                      <span className="text-gray-400 font-black text-[8px] uppercase tracking-wider">Branch visited:</span>
+                      <div className="relative inline-block">
+                        <select
+                          value={newReview.branchId}
+                          onChange={(e) => setNewReview({ ...newReview, branchId: e.target.value })}
+                          className="appearance-none bg-transparent text-white border-none py-0.5 pl-1 pr-6 text-[9px] uppercase tracking-widest font-black focus:outline-none cursor-pointer"
+                        >
+                          {branches.map(b => (
+                            <option key={b.id} value={b.id} className="bg-black text-white">{b.name}</option>
+                          ))}
+                        </select>
+                        <div className="absolute top-1/2 right-1.5 -translate-y-1/2 pointer-events-none text-white/40 text-[5px]">
+                          ▼
+                        </div>
+                      </div>
+                    </div>
+
                     <input
                       type="text"
-                      placeholder="Your Name"
+                      placeholder="Your Tag Name"
                       required
                       value={newReview.name}
                       onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
-                      className="w-full px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                      className="w-full px-6 py-3 bg-white/5 border border-white/10 rounded-[20px] text-white placeholder:text-white/20 focus:outline-none focus:border-primary-brown/40 transition-all font-light text-xs"
                     />
                     <textarea
-                      placeholder="Your Review"
+                      placeholder="The Experience..."
                       required
                       rows={3}
                       value={newReview.text}
                       onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
-                      className="w-full px-6 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all resize-none"
+                      className="w-full px-6 py-3 bg-white/5 border border-white/10 rounded-[20px] text-white placeholder:text-white/20 focus:outline-none focus:border-primary-brown/40 transition-all resize-none font-light text-xs"
                     ></textarea>
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 pt-2">
                       <button
                         type="button"
                         onClick={() => setShowReviewForm(false)}
-                        className="flex-1 py-3 border border-white/20 text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                        className="flex-1 py-4 glass-dark text-white/60 rounded-full font-bold text-[9px] uppercase tracking-widest hover:text-white transition-all"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="flex-1 py-3 bg-white text-primary-brown rounded-full font-bold text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                        className="flex-1 py-4 bg-primary-brown text-white rounded-full font-bold text-[9px] uppercase tracking-widest hover:shadow-[0_0_20px_rgba(178,34,34,0.4)] transition-all active:scale-95"
                       >
-                        Submit
+                        Post Story
                       </button>
                     </div>
                   </form>
@@ -471,71 +849,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. LOCATIONS SECTION (Integrated into Home) */}
-      <section id="locations" className="py-12 md:py-24 bg-cream-bg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 9. LOCATIONS SECTION - Optimized & Compact */}
+      <section id="locations" className="py-16 bg-[#080808] relative overflow-hidden">
+        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary-brown/5 to-transparent pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "backOut" }}
-            className="text-center mb-12"
+            className="text-center mb-10"
           >
-            <span className="text-caramel font-bold text-sm uppercase tracking-[0.3em] mb-2 block">Visit Us</span>
-            <h2 className="text-3xl md:text-5xl font-serif text-dark-roast">Our <span className="italic">5 Branches</span></h2>
+            <span className="text-primary-brown font-black text-[9px] uppercase tracking-[0.4em] mb-3 block">Squad territories</span>
+            <h2 className="text-4xl md:text-6xl font-serif text-white tracking-tighter">
+              The <span className="italic text-primary-brown">Hubs</span>
+            </h2>
           </motion.div>
 
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.2
-                }
-              }
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
-          >
-            {branches.map((branch) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {branches.map((branch, idx) => (
               <motion.div
                 key={branch.id}
-                variants={{
-                  hidden: { opacity: 0, y: 50, scale: 0.9 },
-                  visible: { opacity: 1, y: 0, scale: 1 }
-                }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className="group bg-cream-bg rounded-[40px] overflow-hidden shadow-xl shadow-primary-brown/5 hover:shadow-2xl transition-all duration-500"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: idx * 0.05 }}
+                onClick={() => navigate(`/branch/${branch.id}`)}
+                className="group relative bg-[#0c0c0c] rounded-[32px] overflow-hidden border border-white/5 transition-all duration-500 gpu cursor-pointer hover:border-primary-brown/40 hover:scale-[1.01] hover:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
               >
-                <Link to={`/branch/${branch.id}`} className="block h-64 overflow-hidden relative">
-                  <img 
-                    src={branch.image} 
-                    alt={branch.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                  />
-                </Link>
-                <div className="p-10">
-                  <h3 className="text-2xl font-serif font-bold text-dark-roast mb-4">{branch.name}</h3>
-                  <p className="text-slate-400 text-sm font-light mb-8 line-clamp-2">
-                    {branch.description}
-                  </p>
-                  <div className="flex flex-col gap-4">
-                    <Link 
-                      to={`/branch/${branch.id}`}
-                      className="inline-flex items-center text-primary-brown font-bold text-sm uppercase tracking-widest group/link"
-                    >
-                      Explore Branch <ArrowRight className="ml-2 h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
-                    </Link>
+                <div className="flex flex-row md:flex-col h-[130px] md:h-auto">
+                  <div className="block w-1/3 md:w-full h-full md:h-44 overflow-hidden relative shrink-0">
+                    <img 
+                      src={optimizeImage(branch.image, 400, 50)} 
+                      alt={branch.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r md:bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  </div>
+                  
+                  <div className="p-4 md:p-6 flex flex-col justify-center flex-1">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <div className="w-1 h-1 rounded-full bg-primary-brown animate-pulse" />
+                      <span className="text-[7px] md:text-[8px] font-black text-primary-brown uppercase tracking-widest italic">Live Now</span>
+                    </div>
+                    <h3 className="text-base md:text-xl font-serif font-black text-white mb-1 tracking-tight group-hover:text-primary-brown transition-colors">
+                      {branch.name}
+                    </h3>
+                    <p className="text-gray-500 text-[9px] md:text-[10px] font-light mb-4 line-clamp-1">
+                      {branch.address}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        className="px-4 py-2 bg-primary-brown/10 group-hover:bg-primary-brown text-white rounded-full font-black text-[8px] uppercase tracking-[0.2em] transition-all border border-primary-brown/10 active:scale-95"
+                      >
+                        Enter
+                      </button>
+                      <button className="p-2 glass rounded-full text-white/40 group-hover:text-white transition-colors border border-white/5">
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -616,16 +995,16 @@ export default function Home() {
       </section>
 
       {/* 5. WHY CHOOSE US (Moved to last) */}
-      <section className="py-12 md:py-16 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 md:py-12 bg-black">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div 
             initial={{ opacity: 0, rotateX: -45 }}
             whileInView={{ opacity: 1, rotateX: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: "circOut" }}
-            className="text-center mb-16"
+            className="text-center mb-8"
           >
-            <h2 className="text-4xl md:text-5xl font-serif text-white">Why <span className="italic text-primary-brown">Choose Us</span></h2>
+            <h2 className="text-2xl md:text-3xl font-serif text-white">Why <span className="italic text-primary-brown">Choose Us</span></h2>
           </motion.div>
 
           <motion.div 
@@ -637,32 +1016,32 @@ export default function Home() {
               visible: {
                 opacity: 1,
                 transition: {
-                  staggerChildren: 0.15
+                  staggerChildren: 0.12
                 }
               }
             }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
           >
             {[
               { icon: Coffee, title: "Fresh Beans Daily", desc: "Roasted in small batches for peak flavor." },
-              { icon: Utensils, title: "Delhi Imported Chicken", desc: "Specially sourced for authentic taste." },
-              { icon: Users, title: "Comfort Seating", desc: "Ergonomic spaces for work or relax." },
+              { icon: Utensils, title: "Delhi Chicken", desc: "Specially sourced for authentic taste." },
+              { icon: Users, title: "Comfort Seating", desc: "Ergonomic spaces to work or relax." },
               { icon: Zap, title: "Fast Service", desc: "Your coffee, ready when you are." },
             ].map((feature, idx) => (
               <motion.div
                 key={idx}
                 variants={{
-                  hidden: { opacity: 0, x: -30, filter: "blur(10px)" },
-                  visible: { opacity: 1, x: 0, filter: "blur(0px)" }
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
                 }}
-                transition={{ duration: 0.6 }}
-                className="bg-latte-beige p-10 rounded-[40px] text-center shadow-2xl shadow-black hover:bg-primary-brown transition-all duration-500 group border border-white/5"
+                transition={{ duration: 0.5 }}
+                className="bg-latte-beige/30 p-5 md:p-6 rounded-[24px]/[20px] rounded-3xl text-center shadow-lg hover:bg-primary-brown transition-all duration-300 group border border-white/5"
               >
-                <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-8 text-primary-brown group-hover:bg-white group-hover:text-primary-brown transition-colors">
-                  <feature.icon className="h-8 w-8" />
+                <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center mx-auto mb-4 text-primary-brown group-hover:bg-white group-hover:text-primary-brown transition-colors">
+                  <feature.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-white mb-4 group-hover:text-white transition-colors">{feature.title}</h3>
-                <p className="text-gray-400 text-sm font-light leading-relaxed group-hover:text-white/80 transition-colors">
+                <h3 className="text-xs md:text-sm font-serif font-bold text-white mb-2 group-hover:text-white transition-colors">{feature.title}</h3>
+                <p className="text-gray-400 text-[10px] md:text-xs font-light leading-snug group-hover:text-white/80 transition-colors">
                   {feature.desc}
                 </p>
               </motion.div>

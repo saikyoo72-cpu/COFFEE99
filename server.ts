@@ -24,19 +24,103 @@ process.on('uncaughtException', (err) => {
 });
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const rawSupabaseUrl = (process.env.VITE_SUPABASE_URL || "").trim();
+const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 
-console.log(`[Server] Supabase URL configured: ${!!supabaseUrl}`);
+// Ensure URL is correctly formatted
+let supabaseUrl = rawSupabaseUrl;
+if (supabaseUrl) {
+  // If it's just a 20-char project ID (and doesn't look like a URL)
+  if (!supabaseUrl.includes(".") && supabaseUrl.length === 20) {
+    supabaseUrl = `${supabaseUrl}.supabase.co`;
+  }
+  
+  // Custom check for common placeholder
+  if (supabaseUrl.includes("your-project-id")) {
+    console.error("[Server] ERROR: Supabase URL still contains 'your-project-id'. Please update VITE_SUPABASE_URL in your secrets.");
+  }
+  
+  // Ensure it has a protocol
+  if (!supabaseUrl.startsWith("http")) {
+    supabaseUrl = `https://${supabaseUrl}`;
+    console.log(`[Server] Normalizing Supabase URL: ${supabaseUrl}`);
+  }
+}
+
+console.log(`[Server] Supabase URL configured: ${!!supabaseUrl} (${supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'none'})`);
 console.log(`[Server] Supabase Service Key configured: ${!!supabaseServiceKey}`);
+
+let isSupabaseAvailable = false;
+let isCheckingConnectivity = false;
+let lastCheckTime = 0;
+
+async function checkSupabaseConnectivity(force = false): Promise<boolean> {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    isSupabaseAvailable = false;
+    return false;
+  }
+
+  // Custom check for common placeholder
+  if (supabaseUrl.includes("your-project-id") || supabaseUrl.includes("[YOUR_PROJECT_ID]")) {
+    isSupabaseAvailable = false;
+    return false;
+  }
+
+  const now = Date.now();
+  // Cache connection state for 1 minute unless forced
+  if (!force && lastCheckTime > 0 && (now - lastCheckTime) < 60000) {
+    return isSupabaseAvailable;
+  }
+
+  if (isCheckingConnectivity) {
+    return isSupabaseAvailable;
+  }
+
+  isCheckingConnectivity = true;
+  try {
+    const urlToTest = supabaseUrl.endsWith('/') ? supabaseUrl : `${supabaseUrl}/`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+    
+    const testFetch = await fetch(urlToTest, { 
+      method: "HEAD", 
+      signal: controller.signal,
+      headers: { "Accept": "*/*" }
+    });
+    
+    clearTimeout(timeoutId);
+    isSupabaseAvailable = testFetch.ok || (testFetch.status >= 200 && testFetch.status < 500);
+  } catch (e: any) {
+    const msg = e.message || String(e);
+    if (msg.includes("ENOTFOUND") || msg.includes("fetch failed") || msg.includes("failed to fetch") || msg.includes("timeout") || msg.includes("aborted")) {
+      console.log(`[Supabase Status Check] Dormant (Database connection bypassed. Admin fallbacks and local memory caches are active).`);
+    } else {
+      console.log(`[Supabase Status Check] Dormant (${msg}). Local memory fallback mode active.`);
+    }
+    isSupabaseAvailable = false;
+  } finally {
+    isCheckingConnectivity = false;
+    lastCheckTime = Date.now();
+  }
+
+  return isSupabaseAvailable;
+}
+
+// Check connectivity initially on startup
+checkSupabaseConnectivity(true).catch(() => {});
 
 let supabase: any;
 try {
   if (supabaseUrl && supabaseServiceKey) {
-    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     console.log("[Server] Supabase client initialized");
   } else {
-    console.warn("[Server] Supabase credentials missing, some features will be disabled");
+    console.warn("[Server] Supabase credentials missing (Url: " + !!supabaseUrl + ", Key: " + !!supabaseServiceKey + ")");
   }
 } catch (err) {
   console.error("[Server] Failed to initialize Supabase client:", err);
@@ -55,7 +139,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "Accept", "Cache-Control", "X-Requested-With"]
 }));
 app.use(express.json());
-app.use(cookieParser("coffee99-secret-key"));
+app.use(cookieParser(process.env.COFFEE99_SECRET_KEY || "coffee99-secret-key-fallback"));
 
 // Request Logger
 app.use((req, res, next) => {
@@ -78,11 +162,15 @@ const verifyAdmin = (req: any, res: any, next: any) => {
 };
 
 // API health check
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
   console.log("[API] Health check requested");
+  
+  const connected = await checkSupabaseConnectivity(true);
+
   res.json({ 
     status: "ok", 
     supabase: !!supabase && !!supabaseUrl && !!supabaseServiceKey,
+    supabaseConnectivity: connected,
     time: new Date().toISOString()
   });
 });
@@ -96,18 +184,23 @@ app.post("/api/admin/login", async (req, res) => {
   }
   
   try {
-    const { data: settings, error } = await supabase
-      .from("admin_settings")
-      .select("*")
-      .eq("branch_id", branchId)
-      .maybeSingle();
-
-    if (error) throw error;
-
     let validPassword = process.env.ADMIN_PASSWORD || "aspirion007";
-    
-    if (settings && settings.password) {
-      validPassword = settings.password;
+
+    const isAvailable = await checkSupabaseConnectivity(false);
+    if (supabase && isAvailable) {
+      const { data: settings, error } = await supabase
+        .from("admin_settings")
+        .select("*")
+        .eq("branch_id", branchId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[Auth] Supabase fetch error, continuing with fallback:", error);
+      } else if (settings && settings.password) {
+        validPassword = settings.password;
+      }
+    } else {
+      console.warn("[Auth] Supabase not initialized or offline, using environment fallback password");
     }
 
     if (password === validPassword) {
@@ -116,9 +209,9 @@ app.post("/api/admin/login", async (req, res) => {
     } else {
       return res.status(401).json({ success: false, message: "Invalid access key" });
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Login error:", err);
-    return res.status(500).json({ success: false, message: "Server error during login" });
+    return res.status(500).json({ success: false, message: "Server error during login: " + (err.message || "Unknown error") });
   }
 });
 
@@ -146,12 +239,44 @@ app.get("/api/settings/:branchId", async (req, res) => {
   };
 
   try {
-    if (supabase) {
-      const { data: settings, error } = await supabase
-        .from("admin_settings")
-        .select("*")
-        .eq("branch_id", branchId)
-        .maybeSingle();
+    const isAvailable = await checkSupabaseConnectivity(false);
+    if (supabase && isAvailable) {
+      let settings = null;
+      let error = null;
+      let attempts = 0;
+      const maxAttempts = 2;
+
+      while (attempts <= maxAttempts) {
+        try {
+          const response = await supabase
+            .from("admin_settings")
+            .select("*")
+            .eq("branch_id", branchId)
+            .maybeSingle();
+          
+          settings = response.data;
+          error = response.error;
+          
+          // If it's a fetch error, we might want to retry
+          if (error && (error.message?.includes('fetch failed') || error.message?.includes('TypeError'))) {
+            attempts++;
+            if (attempts <= maxAttempts) {
+              console.log(`[API] Supabase fetch failed, retrying (${attempts}/${maxAttempts})...`);
+              await new Promise(resolve => setTimeout(resolve, 500 * attempts));
+              continue;
+            }
+          }
+          break; // Success or non-retryable error
+        } catch (fetchErr: any) {
+          if (fetchErr.message?.includes('fetch failed') && attempts < maxAttempts) {
+            attempts++;
+            console.log(`[API] Supabase fetch caught exception, retrying (${attempts}/${maxAttempts})...`);
+            await new Promise(resolve => setTimeout(resolve, 500 * attempts));
+            continue;
+          }
+          throw fetchErr;
+        }
+      }
       
       if (!error && settings) {
         console.log(`[API] Settings found in Supabase for ${branchId}`);
@@ -165,7 +290,13 @@ app.get("/api/settings/:branchId", async (req, res) => {
       }
 
       if (error) {
-        console.error(`[API] Supabase error for ${branchId}:`, error.message);
+        console.error(`[API] Supabase fetching error details for ${branchId}:`, {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          url: supabaseUrl.substring(0, 20) + '...'
+        });
       }
     }
 
@@ -183,6 +314,11 @@ app.get("/api/settings/:branchId", async (req, res) => {
 app.post("/api/admin/update-settings/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
   const { newPassword, storeName, storeEmail, storeAddress } = req.body;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.status(503).json({ success: false, message: "Database service unavailable" });
+  }
 
   try {
     const updates: any = { 
@@ -210,6 +346,17 @@ app.post("/api/admin/update-settings/:branchId", verifyAdmin, async (req, res) =
 // Fetch Admin Settings
 app.get("/api/admin/settings/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.json({
+      store_name: "Coffee99",
+      store_email: "contact@coffee99.com",
+      store_address: "Shivmandir, Siliguri",
+      warning: "Database offline"
+    });
+  }
+
   try {
     const { data: settings, error } = await supabase
       .from("admin_settings")
@@ -252,6 +399,12 @@ app.post("/api/admin/logout/:branchId", (req, res) => {
 // Fetch all orders for a branch
 app.get("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.json([]);
+  }
+
   try {
     const { data, error } = await supabase
       .from("orders")
@@ -272,6 +425,11 @@ app.patch("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) 
   const { orderId } = req.params;
   const { status } = req.body;
   
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.status(503).json({ error: "Database service unavailable" });
+  }
+
   try {
     const { data, error } = await supabase
       .from("orders")
@@ -290,6 +448,12 @@ app.patch("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) 
 // Delete an order
 app.delete("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res) => {
   const { orderId } = req.params;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.status(503).json({ error: "Database service unavailable" });
+  }
+
   try {
     const { error } = await supabase
       .from("orders")
@@ -306,6 +470,12 @@ app.delete("/api/admin/orders/:branchId/:orderId", verifyAdmin, async (req, res)
 // Clear all orders for a branch
 app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.status(503).json({ error: "Database service unavailable" });
+  }
+
   try {
     const { error } = await supabase
       .from("orders")
@@ -322,6 +492,12 @@ app.delete("/api/admin/orders/:branchId", verifyAdmin, async (req, res) => {
 // Fetch menu availability
 app.get("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res) => {
   const { branchId } = req.params;
+
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    return res.json([]);
+  }
+
   try {
     const { data, error } = await supabase
       .from("menu_availability")
@@ -342,6 +518,11 @@ app.post("/api/admin/menu-availability/:branchId", verifyAdmin, async (req, res)
   const { branchId } = req.params;
   const { itemId, isAvailable } = req.body;
   
+  const isDbAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isDbAvailable) {
+    return res.status(503).json({ error: "Database service unavailable" });
+  }
+
   try {
     const { error } = await supabase
       .from("menu_availability")
@@ -365,9 +546,10 @@ app.delete("/api/admin/videos/:branchId/:videoId", verifyAdmin, async (req, res)
   const { videoId } = req.params;
   console.log(`[Server] Attempting to delete video: ${videoId}`);
 
-  if (!supabase) {
-    console.error("[Server] Supabase client not initialized");
-    return res.status(500).json({ error: "Supabase client not initialized" });
+  const isAvailable = await checkSupabaseConnectivity(false);
+  if (!supabase || !isAvailable) {
+    console.error("[Server] Supabase client not initialized or database offline");
+    return res.status(503).json({ error: "Database service unavailable" });
   }
 
   try {

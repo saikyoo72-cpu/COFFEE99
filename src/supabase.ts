@@ -1,10 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mvzylepgbvfbgupanelf.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_zZLHCEtjVoL-tF-LevFu4Q_rPKjT6Qs';
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+let supabaseUrl = rawUrl;
+
+if (supabaseUrl) {
+  // Handle project ID only
+  if (!supabaseUrl.includes(".") && supabaseUrl.length === 20) {
+    supabaseUrl = `${supabaseUrl}.supabase.co`;
+  }
+  // Ensure protocol
+  if (!supabaseUrl.startsWith('http')) {
+    supabaseUrl = `https://${supabaseUrl}`;
+  }
+}
+
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials missing in environment variables.');
+  console.warn('Supabase credentials missing or incomplete in environment variables.');
 }
 
 export const supabase = createClient(

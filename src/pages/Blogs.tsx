@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
@@ -17,23 +17,31 @@ import {
   Volume2,
   VolumeX,
   Trash2,
-  ShieldCheck
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 import { supabase } from '../supabase';
+import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
+import { branches } from '../data';
 
 interface VideoData {
   id: string;
   embed_url: string;
   creator_name: string;
+  branch_id?: string;
   created_at: string;
 }
 
 export default function Blogs() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialBranch = searchParams.get('branch') || 'all';
+
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState(initialBranch);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [unmutedVideoId, setUnmutedVideoId] = useState<string | null>(null);
@@ -49,17 +57,42 @@ export default function Blogs() {
   // Form state
   const [videoUrl, setVideoUrl] = useState('');
   const [creatorName, setCreatorName] = useState('');
+  const [uploadBranchId, setUploadBranchId] = useState('shivmandir');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVideos();
   }, []);
 
+  useEffect(() => {
+    const branch = searchParams.get('branch');
+    if (branch) {
+      setSelectedBranch(branch);
+    }
+  }, [searchParams]);
+
+  const handleBranchFilter = (id: string) => {
+    setSelectedBranch(id);
+    if (id === 'all') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('branch');
+      setSearchParams(newParams);
+    } else {
+      setSearchParams({ branch: id });
+    }
+  };
+
   const fetchVideos = async () => {
     try {
       setLoading(true);
+      setError(null);
       console.log('[Blogs] Fetching videos from Supabase...');
       
+      if (!supabase) {
+        throw new Error('Supabase configuration missing');
+      }
+
       // Try fetching with created_at ordering first
       let { data, error } = await supabase
         .from('videos')
@@ -83,9 +116,12 @@ export default function Blogs() {
       }
 
       console.log('[Blogs] Videos received:', data);
-      setVideos(data || []);
+      
+      const finalData = data || [];
+      setVideos(finalData);
     } catch (error: any) {
       console.error('[Blogs] Critical error fetching videos:', error.message || error);
+      setError("Database is currently offline. Please check back later.");
     } finally {
       setLoading(false);
     }
@@ -133,7 +169,8 @@ export default function Blogs() {
         .insert([
           {
             embed_url: finalUrl,
-            creator_name: creatorName
+            creator_name: creatorName,
+            branch_id: uploadBranchId
           }
         ]);
 
@@ -228,14 +265,23 @@ export default function Blogs() {
     }
   };
 
+  // Filter videos by branch
+  const filteredVideos = selectedBranch === 'all' 
+    ? videos 
+    : videos.filter(v => v.branch_id === selectedBranch);
+
   // Distribute videos across three categories
-  // We use slicing and duplication to ensure all sections are populated even with few videos
-  const featuredReels = videos.length > 0 ? videos.slice(0, Math.max(2, Math.ceil(videos.length / 1.5))) : [];
-  const foodVideos = videos.length > 0 ? (videos.length > 1 ? [...videos.slice(Math.floor(videos.length / 2)), ...videos.slice(0, Math.floor(videos.length / 2))] : videos) : [];
-  const creatorVideos = videos.length > 0 ? [...videos].reverse() : [];
+  const featuredReels = filteredVideos.length > 0 ? filteredVideos.slice(0, Math.max(2, Math.ceil(filteredVideos.length / 1.5))) : [];
+  const foodVideos = filteredVideos.length > 0 ? (filteredVideos.length > 1 ? [...filteredVideos.slice(Math.floor(filteredVideos.length / 2)), ...filteredVideos.slice(0, Math.floor(filteredVideos.length / 2))] : filteredVideos) : [];
+  const creatorVideos = filteredVideos.length > 0 ? [...filteredVideos].reverse() : [];
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white font-sans selection:bg-primary-brown/30">
+      <SEO 
+        title="Squad Reels & Blogs | Coffee99 Community" 
+        description="Watch the latest squad reels, coffee tutorials, and behind-the-scenes stories at Coffee99. Join the vibe."
+        keywords="coffee reels, coffee99 blogs, cafe stories, siliguri cafe vibes, coffee tutorial"
+      />
       {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-[#0f0f0f]/80 backdrop-blur-xl border-b border-white/5 h-16 flex items-center justify-between px-4">
         <Link to="/" className="p-2 hover:bg-white/5 rounded-full transition-colors">
@@ -251,6 +297,36 @@ export default function Blogs() {
       </nav>
 
       <main className="pt-20 pb-24">
+        {/* Branch Filter Tabs */}
+        <div className="sticky top-16 z-40 bg-[#0f0f0f]/90 backdrop-blur-md px-4 py-4 border-b border-white/5 overflow-x-auto no-scrollbar mb-8">
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleBranchFilter('all')}
+              className={`px-6 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                selectedBranch === 'all'
+                  ? 'bg-primary-brown text-white shadow-lg'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+            >
+              All Stories
+            </button>
+            {branches.map((branch) => (
+              <button
+                key={branch.id}
+                onClick={() => handleBranchFilter(branch.id)}
+                className={`px-6 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
+                  selectedBranch === branch.id
+                    ? 'bg-primary-brown text-white shadow-lg'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                <MapPin className="w-3 h-3" />
+                {branch.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary-brown" />
@@ -391,6 +467,21 @@ export default function Blogs() {
                         required
                         className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-brown/50 transition-all"
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-400 ml-1">Related Branch</label>
+                      <select 
+                        value={uploadBranchId}
+                        onChange={(e) => setUploadBranchId(e.target.value)}
+                        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-brown/50 transition-all appearance-none cursor-pointer"
+                      >
+                        {branches.map(branch => (
+                          <option key={branch.id} value={branch.id} className="bg-[#1a1a1a]">
+                            {branch.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -551,7 +642,11 @@ function FullVideoCard({
                         embedUrl.toLowerCase().includes('.webm') || 
                         embedUrl.toLowerCase().includes('.ogg') ||
                         embedUrl.toLowerCase().includes('.mov') ||
-                        embedUrl.includes('supabase.co/storage/v1/object/public');
+                        embedUrl.includes('supabase.co/storage/v1/object/public') ||
+                        embedUrl.includes('firebasestorage.googleapis.com') ||
+                        embedUrl.includes('storage.googleapis.com') ||
+                        embedUrl.includes('files.catbox.moe') ||
+                        embedUrl.includes('cloudinary.com');
 
   const [hasBeenInView, setHasBeenInView] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -715,9 +810,9 @@ function FullVideoCard({
   return (
     <motion.div 
       ref={cardRef}
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: "200px" }}
+      initial={{ opacity: 0.5, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
       className="bg-white/5 rounded-[32px] overflow-hidden border border-white/5"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -837,17 +932,24 @@ function FullVideoCard({
           </div>
         </div>
         
-        <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary-brown flex items-center justify-center text-xs font-bold">
-              {video.creator_name ? video.creator_name.substring(0, 2).toUpperCase() : 'C9'}
+          <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary-brown flex items-center justify-center text-xs font-bold">
+                {video.creator_name ? video.creator_name.substring(0, 2).toUpperCase() : 'C9'}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-300">{video.creator_name || "Coffee99 Community"}</span>
+                {video.branch_id && (
+                  <span className="text-[10px] font-black text-primary-brown uppercase tracking-tighter">
+                    📍 {video.branch_id}
+                  </span>
+                )}
+              </div>
             </div>
-            <span className="text-sm font-medium text-gray-300">{video.creator_name || "Coffee99 Community"}</span>
+            <span className="text-xs text-gray-500 ml-auto">
+              {video.created_at ? new Date(video.created_at).toLocaleDateString() : 'Just now'}
+            </span>
           </div>
-          <span className="text-xs text-gray-500 ml-auto">
-            {video.created_at ? new Date(video.created_at).toLocaleDateString() : 'Just now'}
-          </span>
-        </div>
       </div>
     </motion.div>
   );

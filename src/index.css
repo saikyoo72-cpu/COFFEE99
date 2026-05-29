@@ -5,15 +5,56 @@
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", serif;
 
-  --color-primary-brown: #DC2626; /* Bold Red */
+  --color-primary-brown: #B22222; /* Premium Deep Crimson */
+  --color-brand-cyan: #00BB9F;  /* Original Brand Cyan */
   --color-latte-beige: #111111;  /* Deep Charcoal */
   --color-cream-bg: #000000;     /* Pure Black */
   --color-dark-roast: #FFFFFF;   /* Pure White */
-  --color-caramel: #EF4444;      /* Vibrant Red */
+  --color-caramel: #B22222;      /* Balanced Red accent */
   --color-soft-cream: #1A1A1A;   /* Dark Accent Gray */
   --color-brand-crimson: #991B1B;
   --color-brand-charcoal: #080808;
   --color-brand-silver: #9CA3AF;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    background-color: #000000;
+  }
+
+  .glass {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+    will-change: backdrop-filter;
+  }
+  
+  .glass-dark {
+    @apply bg-black/60 backdrop-blur-xl border border-white/5;
+    will-change: backdrop-filter;
+  }
+
+  .text-glow-red {
+    text-shadow: 0 0 15px rgba(178, 34, 34, 0.4);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 15px rgba(0, 187, 159, 0.4);
+  }
+
+  /* GPU Acceleration hints */
+  .gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+    will-change: transform;
+  }
 }
 
 /* Hero Slider Fade Transition */
@@ -46,7 +87,6 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-snap-type: y proximity;
 }
 
 body {
@@ -55,7 +95,6 @@ body {
 }
 
 section {
-  scroll-snap-align: start;
   scroll-margin-top: 80px;
 }
 
@@ -67,7 +106,7 @@ section {
   }
 }
 
-body::before {
+  body::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -78,3 +117,13 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   z-index: 9999;
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+

@@ -6,6 +6,8 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ReviewProvider } from './context/ReviewContext';
 import Cart from './components/Cart';
+import BottomNav from './components/BottomNav';
+import WelcomePopup from './components/WelcomePopup';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToHash from './components/ScrollToHash';
 
@@ -68,6 +70,8 @@ function AppContent() {
       </main>
       {!isDarkPage && <Footer />}
       <Cart />
+      <BottomNav />
+      <WelcomePopup />
     </div>
   );
 }

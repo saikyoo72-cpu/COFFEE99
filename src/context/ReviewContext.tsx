@@ -5,6 +5,7 @@ interface Review {
   name: string;
   text: string;
   rating: number;
+  branchId?: string;
 }
 
 interface ReviewContextType {

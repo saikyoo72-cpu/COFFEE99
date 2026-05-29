@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight, AlertCircle } from 'lucide-react';
+import { Search, ShoppingBag, ArrowLeft, Plus, Star, ChevronRight, AlertCircle, Play } from 'lucide-react';
 import { branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
@@ -26,6 +26,7 @@ export default function BranchMenu() {
 
   const fetchAvailability = async () => {
     try {
+      if (!supabase) return;
       const { data, error } = await supabase
         .from('menu_availability')
         .select('item_id')
@@ -274,6 +275,50 @@ export default function BranchMenu() {
             </div>
           </div>
         </div>
+
+        {/* Blog Section Discovery Ad */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mt-20 relative overflow-hidden rounded-[40px] bg-[#0c0c0c] border border-white/5 p-8 md:p-12"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-brown/20 to-transparent z-0" />
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            <div>
+              <span className="text-primary-brown font-black text-[10px] uppercase tracking-[0.4em] mb-4 block">Inside Stories</span>
+              <h2 className="text-3xl md:text-5xl font-serif text-white mb-6 leading-tight">
+                Watch Behind the Scenes <br/> <span className="italic text-primary-brown">at {branch.name}</span>
+              </h2>
+              <p className="text-gray-400 text-sm md:text-base font-light mb-10 max-w-md leading-relaxed">
+                Explore our spotlight section to see stories, brewing secrets, and customer moments from this branch.
+              </p>
+              <Link 
+                to={`/blogs?branch=${branch.id}`}
+                className="inline-flex items-center gap-3 px-8 py-4 bg-primary-brown text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-all group"
+              >
+                Watch Now <ArrowLeft className="rotate-180 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+            
+            <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-2xl group cursor-pointer">
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              >
+                <source src="https://files.catbox.moe/9fdq9c.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 text-white fill-current" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

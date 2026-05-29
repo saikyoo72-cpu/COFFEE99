@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://coffee99.in/sitemap.xml

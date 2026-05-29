@@ -6,6 +6,7 @@ import { fullMenu, branches } from '../data';
 import { useCart } from '../context/CartContext';
 import { parsePrice } from '../utils/price';
 import { supabase } from '../supabase';
+import SEO from '../components/SEO';
 
 export default function Menu() {
   const { addToCart } = useCart();
@@ -73,6 +74,11 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-cream-bg pt-32 pb-24">
+      <SEO 
+        title="Menu | Artisanal Coffee & Slaying Food" 
+        description="Explore the full Coffee99 menu. From specialty espresso to mouth-watering burgers, find your next favorite meal."
+        keywords="coffee99 menu, coffee prices, burger combo, siliguri cafe menu, coffee squad menu"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
