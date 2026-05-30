@@ -20,7 +20,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials missing or incomplete in environment variables.');
 }
 
+const isConfigured = !!(supabaseUrl && supabaseAnonKey);
+
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
+  isConfigured ? supabaseUrl : 'https://placeholder-project.supabase.co',
+  isConfigured ? supabaseAnonKey : 'placeholder-anon-key'
 );
