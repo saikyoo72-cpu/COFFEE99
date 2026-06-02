@@ -54,6 +54,13 @@ export default function Home() {
     const el = masterpiecesRef.current;
     if (!el) return;
 
+    // Detect touch screens / mobile devices (coarse pointer)
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    if (isTouchDevice) {
+      // Use native fast momentum gestures and avoid background timer loops
+      return;
+    }
+
     let scroller: NodeJS.Timeout;
     let isVisible = false;
 
@@ -68,7 +75,7 @@ export default function Home() {
             el.scrollLeft += 1;
           }
         }
-      }, 30); // Gentle cinematic drift speed, extremely smooth & consistent
+      }, 30); // Gentle cinematic drift speed
     };
 
     const observer = new IntersectionObserver(
@@ -106,6 +113,13 @@ export default function Home() {
     const el = combosRef.current;
     if (!el) return;
 
+    // Detect touch screens / mobile devices (coarse pointer)
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+    if (isTouchDevice) {
+      // Use native fast momentum gestures and avoid background timer loops
+      return;
+    }
+
     let scroller: NodeJS.Timeout;
     let isVisible = false;
 
@@ -120,7 +134,7 @@ export default function Home() {
             el.scrollLeft += 1;
           }
         }
-      }, 30); // Gentle cinematic drift speed, extremely smooth & consistent
+      }, 30); // Gentle cinematic drift speed
     };
 
     const observer = new IntersectionObserver(
@@ -240,6 +254,7 @@ export default function Home() {
                 Welcome to the Squad
               </span>
               <h1 className="text-5xl md:text-8xl lg:text-9xl font-serif text-white mb-6 leading-none tracking-tight select-none">
+                <span className="sr-only">Coffee99 Official Website | Best Cafe &amp; Burger Restaurant in Siliguri, West Bengal</span>
                 <Typewriter 
                   text="Handmade"
                   delay={0.2}
@@ -300,7 +315,7 @@ export default function Home() {
       </section>
 
       {/* 3. BEST PICKS SECTION - Optimized & Compact */}
-      <section className="py-8 bg-[#050505] overflow-hidden relative">
+      <section className="py-8 bg-[#050505] overflow-hidden relative content-visibility-auto">
         <div className="absolute top-0 left-1/4 w-40 h-40 bg-primary-brown/5 blur-[80px] rounded-full pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -475,7 +490,7 @@ export default function Home() {
       </section>
 
       {/* 4. COMBOS SECTION - Optimized & Compact */}
-      <section className="py-8 bg-black overflow-hidden border-t border-white/5 relative">
+      <section className="py-8 bg-black overflow-hidden border-t border-white/5 relative content-visibility-auto">
         <div className="absolute top-1/2 right-0 w-80 h-80 bg-brand-cyan/5 blur-[100px] rounded-full pointer-events-none -z-10" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -650,7 +665,7 @@ export default function Home() {
       </section>
 
       {/* 6. CUSTOMER REVIEWS - Cinematic Redesign */}
-      <section id="reviews" className="py-20 bg-[#080808] overflow-hidden relative">
+      <section id="reviews" className="py-20 bg-[#080808] overflow-hidden relative content-visibility-auto">
         {/* Cinematic Backdrop with Vignette and Bloom */}
         <div className="absolute inset-0 bg-gradient-to-b from-black via-primary-brown/5 to-black pointer-events-none" />
         <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black to-transparent pointer-events-none" />
@@ -850,7 +865,7 @@ export default function Home() {
       </section>
 
       {/* 9. LOCATIONS SECTION - Optimized & Compact */}
-      <section id="locations" className="py-16 bg-[#080808] relative overflow-hidden">
+      <section id="locations" className="py-16 bg-[#080808] relative overflow-hidden content-visibility-auto">
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary-brown/5 to-transparent pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -919,7 +934,7 @@ export default function Home() {
       </section>
 
       {/* 4. ABOUT / STORY SECTION */}
-      <section id="about" className="py-24 bg-latte-beige overflow-hidden">
+      <section id="about" className="py-24 bg-latte-beige overflow-hidden content-visibility-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Heading Section - Now Above the Grid */}
           <motion.div
@@ -976,8 +991,8 @@ export default function Home() {
                 }
               }}
             >
-              <motion.p variants={{ hidden: { opacity: 0, y: 20, filter: "blur(5px)" }, visible: { opacity: 1, y: 0, filter: "blur(0px)" } }} className="text-gray-400 text-lg mb-10 leading-relaxed font-light">
-                Founded in 2018 by Raja, Coffee99 is a first-generation passion project that transformed a simple dream into Siliguri’s ultimate neighborhood retreat. We’re a community-driven hub dedicated to handcrafted brews and fresh bites, ensuring every cup reflects our commitment to quality. Whether you're here for a quiet espresso or a lively catch-up, Coffee99 is where bold flavors and unforgettable moments collide.
+              <motion.p variants={{ hidden: { opacity: 0, y: 20, filter: "blur(5px)" }, visible: { opacity: 1, y: 0, filter: "blur(0px)" } }} className="text-gray-400 text-lg mb-6 leading-relaxed font-light">
+                Founded in 2018 by Raja, Coffee99 is a first-generation culinary passion project that transformed a simple dream into Siliguri’s ultimate neighborhood coffee retreat and gourmet hub. We are committed to supplying the finest artisanal coffee, pour-overs, and handcrafted burgers to food lovers in Siliguri. Whether you visited our cozy spaces in Shivmandir, Hakimpara (near Satyajit Sarani / Khalpara), Shalbari, Medical More, or Ashram Para, Coffee99 delivers premium cafe vibes, unforgettable tastes, and high-quality eats made with love.
               </motion.p>
               <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="flex flex-wrap gap-10">
                 <div className="flex flex-col">
@@ -995,7 +1010,7 @@ export default function Home() {
       </section>
 
       {/* 5. WHY CHOOSE US (Moved to last) */}
-      <section className="py-10 md:py-12 bg-black">
+      <section className="py-10 md:py-12 bg-black content-visibility-auto">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <motion.div 
             initial={{ opacity: 0, rotateX: -45 }}
@@ -1004,7 +1019,7 @@ export default function Home() {
             transition={{ duration: 1, ease: "circOut" }}
             className="text-center mb-8"
           >
-            <h2 className="text-2xl md:text-3xl font-serif text-white">Why <span className="italic text-primary-brown">Choose Us</span></h2>
+            <h2 className="text-2xl md:text-3xl font-serif text-white">Why Coffee99 is the <span className="italic text-primary-brown">Best Coffee Shop &amp; Burger Cafe in Siliguri</span></h2>
           </motion.div>
 
           <motion.div 

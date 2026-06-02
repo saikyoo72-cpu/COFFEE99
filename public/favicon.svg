@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Deepest cinematic black background -->
+    <style>
+      .bg-rect {
+        fill: #000000;
+      }
+      .neon-glow-red {
+        filter: drop-shadow(0px 0px 12px rgba(255, 42, 95, 0.8)) drop-shadow(0px 0px 4px rgba(255, 42, 95, 0.5));
+      }
+      .neon-glow-green {
+        filter: drop-shadow(0px 0px 12px rgba(0, 255, 102, 0.8)) drop-shadow(0px 0px 4px rgba(0, 255, 102, 0.5));
+      }
+      .logo-text {
+        font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', 'Inter', -apple-system, sans-serif;
+        font-weight: 900;
+        text-anchor: middle;
+      }
+    </style>
+  </defs>
+
+  <!-- Solid pure black background requested for high contrast -->
+  <rect width="512" height="512" rx="128" class="bg-rect" />
+
+  <!-- Playful, rounded, premium neon font rendering -->
+  <!-- "COFFEE" in neon pink-red -->
+  <text x="256" y="240" font-size="110" fill="#ff2a5f" class="logo-text neon-glow-red" letter-spacing="2">COFFEE</text>
+
+  <!-- "99" in neon green -->
+  <text x="256" y="380" font-size="150" fill="#00ff66" class="logo-text neon-glow-green" letter-spacing="4">99</text>
+</svg>

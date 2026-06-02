@@ -20,7 +20,7 @@ import {
   ShieldCheck,
   MapPin
 } from 'lucide-react';
-import { supabase } from '../supabase';
+import { supabase, isSupabaseConfigured } from '../supabase';
 import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
 import { branches } from '../data';
@@ -83,10 +83,55 @@ export default function Blogs() {
     }
   };
 
+const LOCAL_FALLBACK_VIDEOS: VideoData[] = [
+  {
+    id: "f1",
+    embed_url: "https://assets.mixkit.co/videos/preview/mixkit-holding-a-steaming-cup-of-hot-coffee-41620-large.mp4",
+    creator_name: "Shivmandir Coffee Vibe",
+    branch_id: "shivmandir",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "f2",
+    embed_url: "https://assets.mixkit.co/videos/preview/mixkit-pouring-milk-into-coffee-cup-34416-large.mp4",
+    creator_name: "Artisanal Latte Art",
+    branch_id: "shivmandir",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "f3",
+    embed_url: "https://assets.mixkit.co/videos/preview/mixkit-coffee-maker-machine-brewing-espresso-41618-large.mp4",
+    creator_name: "Espresso Shots prep",
+    branch_id: "hakimpara",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "f4",
+    embed_url: "https://assets.mixkit.co/videos/preview/mixkit-crispy-fries-dropped-in-slow-motion-41610-large.mp4",
+    creator_name: "Sizzling Crispy Fries",
+    branch_id: "hakimpara",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "f5",
+    embed_url: "https://assets.mixkit.co/videos/preview/mixkit-pouring-hot-coffee-into-a-cup-34407-large.mp4",
+    creator_name: "Aesthetic Morning Pour",
+    branch_id: "shalbari",
+    created_at: new Date().toISOString()
+  }
+];
+
   const fetchVideos = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      if (!isSupabaseConfigured) {
+        console.log('[Blogs] Supabase is not fully configured. Using premium local demo video reels.');
+        setVideos(LOCAL_FALLBACK_VIDEOS);
+        return;
+      }
+
       console.log('[Blogs] Fetching videos from Supabase...');
       
       if (!supabase) {
@@ -117,11 +162,11 @@ export default function Blogs() {
 
       console.log('[Blogs] Videos received:', data);
       
-      const finalData = data || [];
+      const finalData = data && data.length > 0 ? data : LOCAL_FALLBACK_VIDEOS;
       setVideos(finalData);
     } catch (error: any) {
-      console.error('[Blogs] Critical error fetching videos:', error.message || error);
-      setError("Database is currently offline. Please check back later.");
+      console.warn('[Blogs] Fallback to premium local demo video reels due to fetch error:', error.message || error);
+      setVideos(LOCAL_FALLBACK_VIDEOS);
     } finally {
       setLoading(false);
     }

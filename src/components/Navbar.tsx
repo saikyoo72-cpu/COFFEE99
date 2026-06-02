@@ -31,7 +31,7 @@ export default function Navbar() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Fetch dynamic store name (defaulting to shivmandir for branding)
     const fetchStoreName = async (retries = 6) => {

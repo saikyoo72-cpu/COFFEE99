@@ -22,6 +22,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const isConfigured = !!(supabaseUrl && supabaseAnonKey);
 
+export const isSupabaseConfigured = isConfigured;
+
 export const supabase = createClient(
   isConfigured ? supabaseUrl : 'https://placeholder-project.supabase.co',
   isConfigured ? supabaseAnonKey : 'placeholder-anon-key'

@@ -1,4 +1,13 @@
+# Advanced Robots.txt for https://coffee99.in
 User-agent: *
 Allow: /
+Allow: /menu
+Allow: /branch/*
+Allow: /blogs
+Allow: /contact
+Disallow: /admin
+Disallow: /admin-panel
+Disallow: /api/
 
+# Specify the XML Sitemap location
 Sitemap: https://coffee99.in/sitemap.xml
