@@ -10,11 +10,15 @@ import {
   Star, 
   ChevronLeft, 
   ChevronRight,
-  ShoppingBag
+  ShoppingBag,
+  MapPin,
+  Phone,
+  Clock
 } from 'lucide-react';
 import { branches, testimonials } from '../data';
 import { useCart } from '../context/CartContext';
 import PromotionalCarousel from '../components/PromotionalCarousel';
+import AnnouncementStrip from '../components/AnnouncementStrip';
 import { slides } from '../heroSlider';
 
 import { useReviews } from '../context/ReviewContext';
@@ -190,7 +194,7 @@ export default function Home() {
     if (filteredReviews.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % filteredReviews.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(timer);
   }, [filteredReviews.length]);
 
@@ -219,6 +223,7 @@ export default function Home() {
         description="Experience the cinematic vibe at Coffee99. Your one-stop destination for artisanal coffee, slaying burgers, and late-night squad memories."
       />
       <PromotionalCarousel />
+      <AnnouncementStrip />
 
       {/* 2. HERO SECTION - Optimized for Speed with Video Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
@@ -232,7 +237,7 @@ export default function Home() {
             className="w-full h-full object-cover opacity-85"
             poster={optimizeImage(slides[0].img, 800, 60)}
           >
-            <source src="https://files.catbox.moe/9fdq9c.mp4" type="video/mp4" />
+            <source src="https://files.catbox.moe/mqrfuq.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/75" />
         </div>
@@ -717,57 +722,98 @@ export default function Home() {
                   initial={{ opacity: 0, scale: 0.98, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 1.02, x: -20 }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -100) {
+                      setCurrentTestimonial((prev) => (filteredReviews.length ? (prev + 1) % filteredReviews.length : 0));
+                    } else if (info.offset.x > 100) {
+                      setCurrentTestimonial((prev) => (filteredReviews.length ? (prev - 1 + filteredReviews.length) % filteredReviews.length : 0));
+                    }
+                  }}
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full"
+                  className="w-full cursor-grab active:cursor-grabbing"
                 >
-                  <div className="glass-dark p-8 md:p-14 rounded-[50px] border-white/5 shadow-2xl relative overflow-hidden group/card">
-                    {/* Subtle internal atmospheric glow */}
-                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-brown/10 blur-[80px] rounded-full" />
-                    
-                    <div className="relative z-10 flex flex-col items-center">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#1a1a1a] to-primary-brown/20 border border-white/10 flex items-center justify-center font-serif text-2xl italic text-primary-brown mb-5 shadow-inner shadow-black">
-                        {currentReview?.name ? currentReview.name.charAt(0) : "C"}
-                      </div>
-
-                      {currentReview?.branchId && (
-                        <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[8px] uppercase tracking-widest font-black text-primary-brown mb-5">
-                          📍 {branches.find(b => b.id === currentReview.branchId)?.name || "Siliguri Squad"}
+                    <div className="glass-dark p-6 md:p-10 rounded-[32px] border-white/5 shadow-[0_20px_40px_rgba(0,0,0,0.8)] relative overflow-hidden group/card transition-all duration-700">
+                      {/* Active Atmospheric Glow Ring */}
+                      <motion.div 
+                        animate={{ 
+                          opacity: [0.1, 0.2, 0.1],
+                          scale: [1, 1.05, 1] 
+                        }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 bg-gradient-to-tr from-primary-brown/5 via-transparent to-primary-brown/5 pointer-events-none" 
+                      />
+                      
+                      <div className="relative z-10 flex flex-col items-center text-center">
+                        {/* Avatar House - Compact */}
+                        <div className="relative mb-5">
+                          <div className="absolute inset-0 bg-primary-brown/15 blur-lg rounded-full" />
+                          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#111] border border-primary-brown/30 flex items-center justify-center font-serif text-2xl md:text-3xl italic text-primary-brown shadow-2xl overflow-hidden">
+                            {currentReview?.name ? currentReview.name.charAt(0) : "C"}
+                          </div>
                         </div>
-                      )}
 
-                      <div className="flex justify-center gap-1.5 mb-8">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`h-4 w-4 ${i < (currentReview?.rating || 5) ? 'fill-primary-brown text-primary-brown' : 'text-white/5'}`} />
-                        ))}
-                      </div>
+                        {currentReview?.branchId && (
+                          <div className="px-3 py-1 bg-primary-brown/10 border border-primary-brown/20 rounded-full text-[8px] md:text-[9px] uppercase tracking-[0.3em] font-black text-primary-brown mb-6 flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-primary-brown animate-pulse" />
+                            {branches.find(b => b.id === currentReview.branchId)?.name || "Siliguri Squad"}
+                          </div>
+                        )}
 
-                      <blockquote className="text-lg md:text-2xl font-serif italic text-white/90 leading-snug text-center tracking-tight mb-10 max-w-2xl min-h-[80px] flex items-center justify-center">
-                        "{currentReview?.text || "No reviews found under this branch yet. Be the first to share your story!"}"
-                      </blockquote>
+                        <div className="flex justify-center gap-1.5 mb-6">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`h-3.5 w-3.5 md:h-4 md:w-4 transition-all duration-500 ${i < (currentReview?.rating || 5) ? 'fill-primary-brown text-primary-brown drop-shadow-[0_0_8px_rgba(178,34,34,0.4)]' : 'text-white/5'}`} 
+                            />
+                          ))}
+                        </div>
 
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-[1px] bg-primary-brown/40 mb-4" />
-                        <h4 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.5em] italic">
-                          {currentReview?.name || "Coffee99 Patron"}
-                        </h4>
+                        <blockquote className="text-lg md:text-xl font-serif italic text-white/90 leading-[1.4] tracking-tight mb-8 max-w-xl min-h-[60px] md:min-h-[80px] flex items-center justify-center px-4">
+                          "{currentReview?.text || "No reviews found under this branch yet. Be the first to share your story!"}"
+                        </blockquote>
+
+                        <div className="flex flex-col items-center">
+                          <div className="w-10 h-[1px] bg-primary-brown/40 mb-4" />
+                          <h4 className="text-[10px] md:text-xs font-black text-white/30 uppercase tracking-[0.5em] italic font-sans">
+                            {currentReview?.name || "Coffee99 Patron"}
+                          </h4>
+                        </div>
                       </div>
                     </div>
-                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
 
-            {/* Navigation Controls - Sleek & Grounded */}
-            <div className="flex justify-center gap-8 mt-12">
+            {/* Pagination Indicators - Minimal & Compact */}
+            <div className="flex justify-center gap-2.5 mt-4">
+              {filteredReviews.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentTestimonial(idx)}
+                  className={`h-1 rounded-full transition-all duration-500 cursor-pointer ${
+                    idx === currentTestimonial 
+                    ? 'w-6 bg-primary-brown shadow-[0_0_8px_rgba(178,34,34,0.4)]' 
+                    : 'w-1.5 bg-white/10 hover:bg-white/20'
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Controls - Compact Layout */}
+            <div className="flex justify-center gap-6 mt-8">
               <button 
                 onClick={() => setCurrentTestimonial((prev) => (filteredReviews.length ? (prev - 1 + filteredReviews.length) % filteredReviews.length : 0))}
-                className="group w-12 h-12 rounded-full border border-white/10 glass-dark flex items-center justify-center text-white/40 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-500 active:scale-90 cursor-pointer"
+                className="group w-11 h-11 rounded-full border border-white/5 glass-dark flex items-center justify-center text-white/30 hover:text-primary-brown hover:border-primary-brown/30 transition-all duration-500 active:scale-95 cursor-pointer"
               >
                 <ChevronLeft className="h-5 w-5 group-hover:-translate-x-0.5 transition-transform" />
               </button>
               <button 
                 onClick={() => setCurrentTestimonial((prev) => (filteredReviews.length ? (prev + 1) % filteredReviews.length : 0))}
-                className="group w-12 h-12 rounded-full border border-white/10 glass-dark flex items-center justify-center text-white/40 hover:text-primary-brown hover:border-primary-brown/40 transition-all duration-500 active:scale-90 cursor-pointer"
+                className="group w-11 h-11 rounded-full border border-white/5 glass-dark flex items-center justify-center text-white/30 hover:text-primary-brown hover:border-primary-brown/30 transition-all duration-500 active:scale-95 cursor-pointer"
               >
                 <ChevronRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
               </button>
@@ -896,34 +942,88 @@ export default function Home() {
                   <div className="block w-1/3 md:w-full h-full md:h-44 overflow-hidden relative shrink-0">
                     <img 
                       src={optimizeImage(branch.image, 400, 50)} 
-                      alt={branch.name} 
+                      alt={`Coffee99 ${branch.name}`} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r md:bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    
+                    {/* Compact Rating overlay */}
+                    <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-black/90 backdrop-blur-md px-1.5 py-0.5 md:px-2.5 md:py-1 rounded-lg md:rounded-xl border border-white/10 text-[8px] md:text-[10px] font-bold text-primary-brown flex items-center gap-1">
+                      <Star className="h-2.5 w-2.5 md:h-3 md:w-3 fill-primary-brown text-primary-brown" />
+                      <span>{branch.rating}</span>
+                    </div>
                   </div>
                   
-                  <div className="p-4 md:p-6 flex flex-col justify-center flex-1">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <div className="w-1 h-1 rounded-full bg-primary-brown animate-pulse" />
-                      <span className="text-[7px] md:text-[8px] font-black text-primary-brown uppercase tracking-widest italic">Live Now</span>
+                  <div className="p-4 md:p-6 flex flex-col justify-between md:justify-center flex-1">
+                    <div>
+                      <div className="flex items-center justify-between mb-1 md:mb-2">
+                        <div className="flex items-center gap-1">
+                          <div className={`w-1 h-1 rounded-full ${branch.id === 'pradhan-nagar' ? 'bg-primary-brown' : 'bg-emerald-500 animate-pulse'}`} />
+                          <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-widest italic font-sans ${branch.id === 'pradhan-nagar' ? 'text-primary-brown' : 'text-emerald-400 animate-pulse'}`}>
+                            {branch.id === 'pradhan-nagar' ? 'Coming Soon' : 'Live Now'}
+                          </span>
+                        </div>
+                        {branch.id === 'pradhan-nagar' ? (
+                          <div className="px-1.5 py-0.5 bg-primary-brown text-white text-[7px] font-bold rounded uppercase">New</div>
+                        ) : branch.reviews && (
+                          <span className="text-[7px] md:text-[9px] text-gray-500 font-light font-sans hidden md:inline">
+                            {branch.reviews} reviews
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base md:text-xl font-serif font-black text-white mb-1 tracking-tight group-hover:text-primary-brown transition-colors">
+                        {branch.name}
+                      </h3>
+                      <p className="text-gray-500 text-[9px] md:text-[10px] font-light mb-2 md:mb-4 line-clamp-1">
+                        {branch.address}
+                      </p>
                     </div>
-                    <h3 className="text-base md:text-xl font-serif font-black text-white mb-1 tracking-tight group-hover:text-primary-brown transition-colors">
-                      {branch.name}
-                    </h3>
-                    <p className="text-gray-500 text-[9px] md:text-[10px] font-light mb-4 line-clamp-1">
-                      {branch.address}
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <button 
-                        className="px-4 py-2 bg-primary-brown/10 group-hover:bg-primary-brown text-white rounded-full font-black text-[8px] uppercase tracking-[0.2em] transition-all border border-primary-brown/10 active:scale-95"
-                      >
-                        Enter
-                      </button>
-                      <button className="p-2 glass rounded-full text-white/40 group-hover:text-white transition-colors border border-white/5">
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
+
+                    <div className="flex items-center gap-2 font-sans">
+                      {branch.id === 'pradhan-nagar' ? (
+                        <>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Simple notification simulation or modal trigger
+                            }}
+                            className="px-3 py-1.5 md:px-4 md:py-2 bg-primary-brown text-white rounded-full font-black text-[8px] uppercase tracking-[0.2em] transition-all border border-primary-brown/10 active:scale-95"
+                          >
+                            Notify Me
+                          </button>
+                          <button 
+                            disabled
+                            className="px-3 py-1.5 md:px-4 md:py-2 bg-white/5 text-gray-600 rounded-full font-black text-[8px] uppercase tracking-[0.2em] border border-white/5 cursor-not-allowed opacity-50"
+                          >
+                            Coming Soon
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/branch/${branch.id}`);
+                            }}
+                            className="px-3 py-1.5 md:px-4 md:py-2 bg-primary-brown/10 group-hover:bg-primary-brown text-white rounded-full font-black text-[8px] uppercase tracking-[0.2em] transition-all border border-primary-brown/10 active:scale-95"
+                          >
+                            Enter
+                          </button>
+                          {branch.googleBusinessProfile && (
+                            <a 
+                              href={branch.googleBusinessProfile}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-3 py-1.5 md:px-4 md:py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-full font-black text-[8px] uppercase tracking-[0.2em] transition-all border border-white/5 active:scale-95 text-center flex items-center justify-center gap-1"
+                            >
+                              Directions
+                            </a>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -22,6 +22,10 @@ export interface Branch {
   mapEmbed: string;
   gallery: string[];
   menu: MenuCategory[];
+  phone?: string;
+  googleBusinessProfile?: string;
+  rating?: number;
+  reviews?: number;
 }
 
 export const fullMenu: MenuCategory[] = [
@@ -249,6 +253,20 @@ export const menuItems = fullMenu.flatMap(category =>
 
 export const branches: Branch[] = [
   {
+    id: "pradhan-nagar",
+    name: "COMING SOON",
+    description: "Something exciting is brewing.",
+    image: "https://files.catbox.moe/x84brt.jpeg", // Mysterious teaser image provided by user
+    address: "Pradhan Nagar, Nivedita Road",
+    hours: "Reveal Soon",
+    mapEmbed: "",
+    gallery: [],
+    menu: [],
+    rating: 5.0,
+    reviews: 0,
+    status: "COMING SOON" // Added a custom field for easier filtering if needed
+  } as any,
+  {
     id: "shivmandir",
     name: "Shivmandir",
     description: "A serene spot perfect for a peaceful morning coffee or a sunset treat.",
@@ -262,7 +280,11 @@ export const branches: Branch[] = [
       "https://i.ibb.co/KxwMX6tS/unnamed.jpg",
       "https://i.ibb.co/79fqpp2/unnamed.jpg"
     ],
-    menu: fullMenu
+    menu: fullMenu,
+    phone: "+91 89277 07769",
+    googleBusinessProfile: "https://www.google.com/maps/search/?api=1&query=Coffee99+Shivmandir+Near+Sri+Nara+Singha+Vidyapith+Siliguri",
+    rating: 4.9,
+    reviews: 420
   },
   {
     id: "hakimpara",
@@ -278,7 +300,11 @@ export const branches: Branch[] = [
       "https://i.ibb.co/yBm5R09d/unnamed.jpg",
       "https://i.ibb.co/zW8zwBpg/unnamed.jpg"
     ],
-    menu: fullMenu
+    menu: fullMenu,
+    phone: "+91 89277 07769",
+    googleBusinessProfile: "https://www.google.com/maps/search/?api=1&query=Coffee99+Hakimpara+Near+Yellow+Building+Siliguri",
+    rating: 4.8,
+    reviews: 310
   },
   {
     id: "shalbari",
@@ -294,7 +320,11 @@ export const branches: Branch[] = [
       "https://i.ibb.co/WNbzYZsL/unnamed.jpg",
       "https://i.ibb.co/B5fPR0vN/unnamed.jpg"
     ],
-    menu: fullMenu
+    menu: fullMenu,
+    phone: "+91 89277 07769",
+    googleBusinessProfile: "https://www.google.com/maps/search/?api=1&query=Coffee99+Shalbari+Near+Jio+Mart+Siliguri",
+    rating: 4.7,
+    reviews: 185
   },
   {
     id: "bara-mohansingh",
@@ -310,7 +340,11 @@ export const branches: Branch[] = [
       "https://i.ibb.co/23RqSJS0/unnamed.jpg",
       "https://i.ibb.co/zTfxRFp3/unnamed.jpg"
     ],
-    menu: fullMenu
+    menu: fullMenu,
+    phone: "+91 89277 07769",
+    googleBusinessProfile: "https://www.google.com/maps/search/?api=1&query=Coffee99+Medical+More+Near+Mukta+Nursing+Home+Bara+Mohansingh+Siliguri",
+    rating: 4.9,
+    reviews: 295
   },
   {
     id: "ashram-para",
@@ -326,7 +360,11 @@ export const branches: Branch[] = [
       "https://i.ibb.co/t5CZG9L/image.jpg",
       "https://i.ibb.co/ym876TG8/image.jpg"
     ],
-    menu: fullMenu
+    menu: fullMenu,
+    phone: "+91 89277 07769",
+    googleBusinessProfile: "https://www.google.com/maps/search/?api=1&query=Coffee99+Ashram+Para+Near+Anjali+Jewellers+Siliguri",
+    rating: 4.8,
+    reviews: 240
   }
 ];
 

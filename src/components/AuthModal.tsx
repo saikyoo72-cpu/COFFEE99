@@ -80,13 +80,14 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-[6px] gpu"
           />
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            initial={{ scale: 0.95, opacity: 0, y: 15 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md bg-[#121212] rounded-[32px] overflow-hidden shadow-2xl border border-white/10"
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            className="relative w-full max-w-md bg-[#0a0a0a] rounded-[32px] overflow-hidden shadow-2xl border border-white/10 gpu"
           >
             <div className="p-8">
               <div className="flex justify-between items-center mb-8">

@@ -184,36 +184,97 @@ export default function Branch() {
             </motion.div>
 
             {/* Sidebar Info */}
-            <div className="lg:col-span-1 space-y-12">
+            <div className="lg:col-span-1 space-y-8">
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="bg-latte-beige p-10 rounded-[40px] shadow-2xl shadow-black border border-white/5"
+                className="bg-[#0b0b0b] p-8 rounded-[36px] shadow-2xl shadow-black/40 border border-white/5 space-y-8 font-sans"
               >
-                <h3 className="text-xl font-serif text-white mb-8 flex items-center">
-                  <Star className="h-5 w-5 mr-3 text-primary-brown fill-primary-brown" /> Branch Details
-                </h3>
-                <div className="space-y-8">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <h3 className="text-xl font-serif text-white flex items-center">
+                    <Star className="h-5 w-5 mr-3 text-primary-brown fill-primary-brown" /> Hub Details
+                  </h3>
+                  {branch.rating && (
+                    <div className="flex items-center gap-1 bg-primary-brown/15 px-3 py-1 rounded-xl border border-primary-brown/20 text-xs font-bold text-primary-brown">
+                      <span>{branch.rating}</span>
+                      <Star className="h-3 w-3 fill-primary-brown text-primary-brown" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
                   <div className="group">
-                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2">Address</p>
-                    <p className="text-gray-400 font-light leading-relaxed">{branch.address}</p>
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5 font-sans">
+                      <MapPin className="h-3.5 w-3.5 text-primary-brown" /> Exact Address
+                    </p>
+                    <p className="text-gray-300 font-light leading-relaxed text-sm font-sans">{branch.address}</p>
                   </div>
+
+                  {branch.phone && (
+                    <div>
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5 font-sans">
+                        <Phone className="h-3.5 w-3.5 text-primary-brown" /> Contact Phone
+                      </p>
+                      <a 
+                        href={`tel:${branch.phone.replace(/\s+/g, '')}`}
+                        className="text-gray-300 hover:text-primary-brown font-medium transition-colors text-sm font-sans"
+                      >
+                        {branch.phone}
+                      </a>
+                    </div>
+                  )}
+
                   <div>
-                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2">Opening Hours</p>
-                    <p className="text-gray-400 font-light">{branch.hours}</p>
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5 font-sans">
+                      <Clock className="h-3.5 w-3.5 text-primary-brown" /> Opening Hours
+                    </p>
+                    <p className="text-gray-300 font-light text-sm font-sans">{branch.hours}</p>
                   </div>
+
+                  {branch.reviews && (
+                    <div>
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-2 font-sans font-bold">Google Authority Rank</p>
+                      <div className="text-gray-300 font-light text-sm flex items-center gap-1.5 font-sans">
+                        <span className="text-white font-bold">{branch.rating} / 5.0</span>
+                        <span className="text-white/40">•</span>
+                        <span>{branch.reviews} Verified Reviews</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Micro Actions Block */}
+                <div className="pt-4 border-t border-white/5 space-y-3 font-sans">
+                  {branch.googleBusinessProfile && (
+                    <>
+                      <a 
+                        href={branch.googleBusinessProfile}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 px-6 bg-primary-brown text-white hover:bg-white hover:text-black rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-primary-brown/20"
+                      >
+                        <MapPin className="h-4 w-4" /> Get Directions
+                      </a>
+                      <a 
+                        href={`${branch.googleBusinessProfile}&showreviews=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all border border-white/10 flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Star className="h-4 w-4 text-primary-brown" /> View Google Reviews
+                      </a>
+                    </>
+                  )}
                 </div>
               </motion.div>
 
-              <motion.a 
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.address + " Coffee99 Siliguri")}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* Lazy Embedded Iframe Map Container */}
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="block rounded-[40px] overflow-hidden h-72 border border-primary-brown/5 shadow-2xl shadow-primary-brown/10 relative group cursor-pointer"
+                className="block rounded-[36px] overflow-hidden h-72 border border-white/5 bg-[#0a0a0a] relative group shadow-2xl"
               >
                 <iframe 
                   src={branch.mapEmbed}
@@ -222,15 +283,22 @@ export default function Branch() {
                   style={{ border: 0 }} 
                   allowFullScreen 
                   loading="lazy"
-                  title="Google Maps"
-                  className="grayscale hover:grayscale-0 transition-all duration-700 pointer-events-none"
+                  title={`Google Maps location - Coffee99 ${branch.name}`}
+                  className="grayscale invert opacity-50 hover:opacity-100 transition-all duration-700 filter contrast-95 saturate-100"
                 ></iframe>
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500 flex items-center justify-center">
-                  <div className="bg-primary-brown text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 shadow-2xl">
-                    Open in Google Maps
-                  </div>
-                </div>
-              </motion.a>
+                {branch.googleBusinessProfile && (
+                  <a 
+                    href={branch.googleBusinessProfile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 bg-transparent flex items-center justify-center pointer-events-auto"
+                  >
+                    <div className="bg-black/95 border border-white/10 text-white hover:bg-primary-brown px-5 py-3 rounded-full text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 shadow-2xl">
+                      Open in Google Maps &rarr;
+                    </div>
+                  </a>
+                )}
+              </motion.div>
             </div>
           </div>
         </div>

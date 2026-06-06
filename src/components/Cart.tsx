@@ -48,7 +48,7 @@ export default function Cart() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={toggleCart}
-              className="fixed inset-0 bg-dark-roast/40 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/60 backdrop-blur-[6px] z-[60] gpu"
             />
 
             {/* Panel */}
@@ -56,11 +56,11 @@ export default function Cart() {
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-full max-w-[340px] bg-cream-bg shadow-2xl z-[70] flex flex-col"
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-full max-w-[340px] bg-[#0c0c0c] shadow-2xl z-[70] flex flex-col border-l border-white/5 gpu"
             >
               {/* Header */}
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-latte-beige">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/40 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <div className="bg-primary-brown p-2 rounded-xl">
                     <ShoppingBag className="h-5 w-5 text-white" />
@@ -95,7 +95,7 @@ export default function Cart() {
                       <motion.div
                         layout
                         key={item.id}
-                        className="flex gap-4 bg-latte-beige p-4 rounded-3xl shadow-sm border border-white/5"
+                        className="flex gap-4 bg-white/5 p-4 rounded-3xl shadow-sm border border-white/5"
                       >
                         <div className="flex-grow min-w-0">
                           <div className="flex justify-between items-start mb-1">
@@ -135,7 +135,7 @@ export default function Cart() {
 
               {/* Footer */}
               {cart.length > 0 && (
-                <div className="p-6 bg-latte-beige border-t border-white/5 space-y-4">
+                <div className="p-6 bg-black/60 backdrop-blur-md border-t border-white/5 space-y-4">
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-gray-400 font-light">Total Amount</span>
                     <span className="text-2xl font-serif font-bold text-white">₹{Number(totalPrice || 0).toFixed(2)}</span>

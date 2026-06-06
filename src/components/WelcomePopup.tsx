@@ -4,24 +4,20 @@ import { Sparkles, PartyPopper, Disc, Flame } from 'lucide-react';
 
 // Generative party particle data mapping multiple coordinates for party feel
 const CONFETTI_PARTICLES = [
-  { id: 1, char: '🎉', size: 24, left: '8%', top: '15%', duration: 4, delay: 0.1, rotate: [0, 360], y: [-15, 25] },
-  { id: 2, char: '✨', size: 18, left: '84%', top: '12%', duration: 3.2, delay: 0.4, rotate: [0, 180], y: [15, -25] },
-  { id: 3, char: '🥳', size: 22, left: '78%', top: '75%', duration: 4.8, delay: 0.2, rotate: [0, -360], y: [-20, 20] },
-  { id: 4, char: '🎈', size: 20, left: '12%', top: '78%', duration: 4.2, delay: 0.7, rotate: [-15, 15], y: [20, -20] },
-  { id: 5, char: '🍻', size: 20, left: '88%', top: '42%', duration: 3.5, delay: 0.3, rotate: [0, 360], y: [-15, 15] },
-  { id: 6, char: '🍔', size: 18, left: '7%', top: '48%', duration: 3.9, delay: 0.5, rotate: [-30, 30], y: [10, -20] },
-  { id: 7, char: '💃', size: 22, left: '18%', top: '30%', duration: 5.2, delay: 0.8, rotate: [0, 20], y: [-10, 30] },
-  { id: 8, char: '🍕', size: 18, left: '74%', top: '32%', duration: 4.1, delay: 0.6, rotate: [-180, 180], y: [25, -15] },
+  { id: 1, char: '🎉', size: 24, left: '8%', top: '15%', duration: 4, delay: 0.1, rotate: 360, y: 40 },
+  { id: 2, char: '✨', size: 18, left: '84%', top: '12%', duration: 3.5, delay: 0.4, rotate: 180, y: -40 },
+  { id: 3, char: '🥳', size: 22, left: '78%', top: '75%', duration: 4.5, delay: 0.2, rotate: -360, y: 30 },
+  { id: 4, char: '🎈', size: 20, left: '12%', top: '78%', duration: 4, delay: 0.7, rotate: 15, y: -30 },
 ];
 
 export default function WelcomePopup() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Always trigger the popup on page reload so the experience is reliable and testable
+    // Show popup after a shorter, snappier delay
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 7000); // Elegantly delayed to appear after exactly 7 seconds
+    }, 2500); 
     
     return () => clearTimeout(timer);
   }, []);
@@ -34,66 +30,58 @@ export default function WelcomePopup() {
     <AnimatePresence>
       {isVisible && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center px-6 overflow-hidden">
-          {/* Backdrop with elegant party night vibes & heavy blur */}
+          {/* Backdrop with elegant party night vibes */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.3 }}
             onClick={handleClose}
-            className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm gpu"
           />
 
-          {/* Interactive Disco Glow Lights behind the popup */}
-          <motion.div 
-            animate={{
-              scale: [1, 1.2, 0.9, 1.1, 1],
-              rotate: [0, 90, 180, 270, 360]
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-            className="absolute z-10 w-[450px] h-[450px] bg-gradient-to-tr from-[#b22222]/20 via-[#4b0082]/15 to-[#00ffff]/15 blur-[90px] rounded-full pointer-events-none"
+          {/* Interactive Disco Glow Lights - Maximum Performance Optimization */}
+          <div 
+            className="absolute z-10 w-[300px] h-[300px] bg-primary-brown/10 blur-[60px] rounded-full pointer-events-none opacity-40 gpu animate-pulse"
           />
 
           {/* Popup Card container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 35 }}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 25 }}
-            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-20 w-full max-w-[360px] bg-gradient-to-b from-[#121212] to-[#040404] rounded-[40px] overflow-hidden border border-white/10 shadow-[0_45px_100px_rgba(0,0,0,0.95)]"
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ 
+              type: "spring",
+              damping: 30,
+              stiffness: 400
+            }}
+            className="relative z-20 w-full max-w-[340px] bg-[#080808] rounded-[32px] overflow-hidden border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.8)] gpu"
           >
             {/* Dynamic Disco Neon Ring */}
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-primary-brown via-purple-600 to-brand-cyan animate-pulse" />
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary-brown via-purple-600 to-primary-brown bg-[length:200%_auto] animate-[shimmer_3s_infinite_linear]" />
 
             {/* Floating Confetti Layer */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none">
               {CONFETTI_PARTICLES.map((p) => (
                 <motion.div
                   key={p.id}
-                  initial={{ opacity: 0, scale: 0 }}
+                  initial={{ opacity: 0 }}
                   animate={{ 
-                    opacity: [0.3, 0.9, 0.3], 
-                    scale: [0.8, 1.15, 0.8],
-                    y: p.y,
-                    rotate: p.rotate
+                    opacity: [0, 0.8, 0],
+                    y: [0, p.y],
+                    rotate: [0, p.rotate]
                   }}
                   transition={{
                     duration: p.duration,
                     delay: p.delay,
                     repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
+                    ease: "linear"
                   }}
-                  className="absolute select-none"
+                  className="absolute select-none font-sans"
                   style={{
                     left: p.left,
                     top: p.top,
                     fontSize: p.size,
-                    filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.5))'
                   }}
                 >
                   {p.char}
@@ -101,85 +89,56 @@ export default function WelcomePopup() {
               ))}
             </div>
 
-            {/* Luxury Disco/Lounge branding element */}
-            <div className="p-8 pb-9 relative z-10 flex flex-col items-center text-center">
+            {/* Content Container */}
+            <div className="p-8 pb-10 relative z-10 flex flex-col items-center text-center">
               
-              {/* Premium micro badge */}
-              <div className="mb-5 flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                <Sparkles className="h-3 w-3 text-primary-brown animate-pulse" />
-                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-gray-300">
-                  Exclusive Vibes Club
+              <div className="mb-6 flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/5 rounded-full">
+                <Sparkles className="h-3 w-3 text-primary-brown" />
+                <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                  Exclusive Squad Club
                 </span>
               </div>
 
-              {/* Main glowing icon layout */}
               <div className="relative mb-6">
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.12, 1],
-                    rotate: [0, 5, -5, 0]
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="absolute inset-0 bg-primary-brown/30 blur-2xl rounded-full" 
-                />
+                <div className="absolute inset-0 bg-primary-brown/20 blur-xl rounded-full" />
                 
-                {/* Spinning disco wheel element */}
-                <div className="relative w-20 h-20 bg-[#161616] rounded-[28px] flex items-center justify-center border border-primary-brown/40 shadow-inner">
-                  {/* Decorative neon ring */}
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-1 rounded-full border border-dashed border-primary-brown/30 opacity-70"
-                  />
-                  <PartyPopper className="h-10 w-10 text-primary-brown relative z-10" strokeWidth={1.5} />
+                <div className="relative w-20 h-20 bg-[#121212] rounded-3xl flex items-center justify-center border border-white/5 shadow-inner">
+                  <PartyPopper className="h-10 w-10 text-primary-brown relative z-10" />
                   
-                  {/* Active pulsing tag */}
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#ff003c] text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow">
+                  <span className="absolute -top-1 -right-1 bg-primary-brown text-white text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
                     Lounge
                   </span>
                 </div>
               </div>
 
-              {/* High Contrast, easily readable main title */}
-              <h2 className="text-2xl sm:text-3xl font-serif text-white mb-3.5 leading-tight tracking-tight">
-                Welcome to the <br />
-                <span className="italic text-primary-brown text-glow-red font-semibold">Coffee99 Arena! ⚡</span>
+              <h2 className="text-2xl sm:text-3xl font-serif text-white mb-3 tracking-tight">
+                Welcome to <br />
+                <span className="italic text-primary-brown font-semibold">Coffee99 Arena! ⚡</span>
               </h2>
 
-              <p className="text-[11px] sm:text-xs text-gray-300 font-light leading-relaxed max-w-[280px] mx-auto mb-7">
-                Prepare yourself for Siliguri’s coolest hotspot. Unmatchable artisanal brews, mouth-watering eats, and high-energy squad atmosphere await! 🤝
+              <p className="text-[11px] sm:text-xs text-gray-400 font-light leading-relaxed max-w-[260px] mx-auto mb-8 font-sans">
+                Experience Siliguri’s premier artisanal hub. From specialty brews to high-energy vibes, your squad's new home awaits!
               </p>
 
-              {/* CTA Buttons */}
               <div className="w-full space-y-3">
                 <button
                   onClick={handleClose}
-                  className="group/btn relative w-full py-4 overflow-hidden bg-primary-brown text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] shadow-lg shadow-primary-brown/30 transition-all hover:shadow-primary-brown/50 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 cursor-pointer"
+                  className="w-full py-4 bg-primary-brown text-white rounded-2xl font-bold text-[10px] uppercase tracking-[0.25em] shadow-lg shadow-primary-brown/20 transition-all hover:bg-white hover:text-black active:scale-[0.98] cursor-pointer"
                 >
-                  {/* Elegant metallic sweeping effect */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" />
-                  <span className="relative z-10 flex items-center justify-center gap-1.5">
-                    Start the Vibes 🥳
-                  </span>
+                  Start the Vibes 🥳
                 </button>
 
                 <button
                   onClick={handleClose}
-                  className="w-full py-1.5 text-[8px] sm:text-[9px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors cursor-pointer"
+                  className="w-full py-2 text-[9px] font-bold text-gray-600 hover:text-gray-300 transition-colors uppercase tracking-[0.1em] cursor-pointer"
                 >
-                  Direct Entry
+                  Skip to Feed
                 </button>
               </div>
-
             </div>
-
-            {/* Glowing party aesthetic corners */}
-            <div className="absolute top-0 right-0 w-20 h-[1px] bg-gradient-to-l from-primary-brown/60 to-transparent pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-20 h-[1px] bg-gradient-to-r from-brand-cyan/40 to-transparent pointer-events-none" />
+            
+            {/* Corner Decorative */}
+            <div className="absolute bottom-0 right-0 w-16 h-[1px] bg-gradient-to-l from-primary-brown/30 to-transparent" />
           </motion.div>
         </div>
       )}

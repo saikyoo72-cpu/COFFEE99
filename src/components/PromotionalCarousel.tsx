@@ -7,7 +7,7 @@ const slides = [
   {
     id: 1,
     image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1920',
-    label: 'COLLABORATE 🎥',
+    label: 'COMMUNITY 🎥',
     title: 'Join Our Community',
     subtitle: 'Are you a content creator? Collaborate with Coffee99, get featured, and grow with our community.',
     buttonText: 'Join Now',
@@ -16,27 +16,27 @@ const slides = [
   {
     id: 2,
     image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=1920',
-    label: 'TRENDING 🔥',
-    title: 'Season\'s Hot Picks',
-    subtitle: 'Discover our latest trending items, handcrafted for bold flavors.',
+    label: 'THE SQUAD 🔥',
+    title: 'Coffee99 Squad',
+    subtitle: 'Experience the boldest flavors with the coolest community in Siliguri.',
     buttonText: 'Order Now',
     link: '/hot-items'
   },
   {
     id: 3,
     image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1920',
-    label: 'STORIES 🎬',
-    title: 'Creator Spotlight',
-    subtitle: 'Explore behind-the-scenes stories and watch our latest community features.',
+    label: 'FRESH 🎬',
+    title: 'Freshly Brewed Daily',
+    subtitle: 'Handcrafted excellence in every cup, delivered with passion everyday.',
     buttonText: 'Watch Now',
     link: '/blogs'
   },
   {
     id: 4,
     image: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&q=80&w=1920',
-    label: 'VALUE MENU ✨',
-    title: 'Our Bestsellers',
-    subtitle: 'Legendary flavors starting from ₹49. Perfect for any craving.',
+    label: 'LIFESTYLE ✨',
+    title: 'More Than Coffee',
+    subtitle: 'A place for memories, connections, and the finest artisanal eats.',
     buttonText: 'Explore Now',
     link: '/bestsellers'
   }
@@ -84,7 +84,7 @@ export default function PromotionalCarousel() {
 
   useEffect(() => {
     if (isPaused) return;
-    const timer = setInterval(nextSlide, 7000); 
+    const timer = setInterval(nextSlide, 2500); 
     return () => clearInterval(timer);
   }, [isPaused, nextSlide]);
 
@@ -105,7 +105,7 @@ export default function PromotionalCarousel() {
 
   return (
     <div 
-      className="relative w-full pt-16 bg-black overflow-hidden"
+      className="relative w-full pt-10 bg-black overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -114,7 +114,7 @@ export default function PromotionalCarousel() {
         <FadeGlow color="#00BB9F" delay={4} />
       </div>
 
-      <div className="relative h-[180px] md:h-[240px] overflow-hidden border-b border-white/5">
+      <div className="relative h-[130px] md:h-[180px] overflow-hidden border-b border-white/5">
         <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={currentIndex}
@@ -151,14 +151,14 @@ export default function PromotionalCarousel() {
                   transition={{ delay: 0.2 }}
                   className="flex flex-col gap-4"
                 >
-                  <span className="w-fit px-4 py-1.5 glass-dark text-white text-[9px] font-black uppercase tracking-[0.4em] rounded-full">
+                  <span className="w-fit px-3 py-1 glass-dark text-white text-[8px] font-black uppercase tracking-[0.4em] rounded-full">
                     {slides[currentIndex].label}
                   </span>
                   <div>
-                    <h2 className="text-3xl md:text-5xl font-serif font-black text-white leading-tight mb-2">
+                    <h2 className="text-2xl md:text-4xl font-serif font-black text-white leading-tight mb-1">
                       {slides[currentIndex].title}
                     </h2>
-                    <p className="text-gray-400 text-xs md:text-sm font-light max-w-lg hidden md:block">
+                    <p className="text-gray-400 text-[10px] md:text-xs font-light max-w-lg hidden md:block">
                       {slides[currentIndex].subtitle}
                     </p>
                   </div>
